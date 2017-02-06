@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Licence: 
+# Licence:
 
 # Usage:
 
@@ -18,9 +18,10 @@ except ImportError:
 		call(["sudo", "easy_install", "argparse"])
 	else:
 		sys.exit("[Error] Exiting due to missing dependency 'argparser'")
-														        
-parser = argparse.ArgumentParser(prog="ADD-SCRIPT-NAME-HERE")
-parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose")
+
+parser = argparse.ArgumentParser(prog="avt.py")
+parser.add_argument("-f", "--fasta", help="Name of FASTA file")
+parser.add_argument("-b", "--bam", help="Name of BAM file")
 args = parser.parse_args()
 
 def main():
