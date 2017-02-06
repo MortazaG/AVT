@@ -5,6 +5,7 @@
 # Usage:
 
 import sys
+import Bio
 
 try:
     import argparse
@@ -20,8 +21,8 @@ except ImportError:
 		sys.exit("[Error] Exiting due to missing dependency 'argparser'")
 
 parser = argparse.ArgumentParser(prog="avt.py")
-parser.add_argument("-f", "--fasta", help="Name of FASTA file")
-parser.add_argument("-b", "--bam", help="Name of BAM file")
+parser.add_argument("-f", "--fasta", help="Enter name of FASTA file")
+parser.add_argument("-b", "--bam", help="Enter name of BAM file")
 args = parser.parse_args()
 
 def main():
