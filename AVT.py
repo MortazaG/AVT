@@ -5,7 +5,7 @@
 # Usage:
 
 import sys
-import Bio
+from Bio import SeqIO
 
 try:
     import argparse
@@ -26,8 +26,11 @@ parser.add_argument("-b", "--bam", help="Enter name of BAM file")
 args = parser.parse_args()
 
 def main():
-	### Remove the next line and add your own code instead ###
-	print "Try '%s -h'" % sys.argv[0]
+
+    if args.fasta:
+        for seq_record in SeqIO.parse(args.fasta, 'fasta'):
+            print seq_record.id
+            print seq_record.seq
 
 
 if __name__ == "__main__":
