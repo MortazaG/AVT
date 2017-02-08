@@ -5,6 +5,7 @@
 # Usage:
 
 import sys
+import pysam
 from Bio import SeqIO, SeqUtils
 
 try:
@@ -33,6 +34,9 @@ def main():
             print 'ID: %s' % fasta_record.id
             print 'GC content: %.2f%%\n' % GC_content
 
+    if args.bam:
+        samfile = pysam.AlignmentFile(args.bam, 'rb')
+        print 'Sucessfully opened BAM file!'
 
 if __name__ == "__main__":
     main()
