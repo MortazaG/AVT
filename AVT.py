@@ -5,7 +5,7 @@
 # Usage:
 
 import sys
-from Bio import SeqIO
+from Bio import SeqIO, SeqUtils
 
 try:
     import argparse
@@ -28,9 +28,10 @@ args = parser.parse_args()
 def main():
 
     if args.fasta:
-        for seq_record in SeqIO.parse(args.fasta, 'fasta'):
-            print seq_record.id
-            print seq_record.seq
+        for fasta_record in SeqIO.parse(args.fasta, 'fasta'):
+            GC_content = SeqUtils.GC(fasta_record.seq)
+            print 'ID: %s' % fasta_record.id
+            print 'GC content: %.2f%%\n' % GC_content
 
 
 if __name__ == "__main__":
