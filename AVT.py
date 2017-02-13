@@ -49,12 +49,6 @@ def main():
             for length in samfile.lengths:
                 ref_size += length
 
-            sum_bases = 0
-            tot_bases = 0
-            for c in samfile.pileup():
-                sum_bases += c.n      # c.n gives us the coverage of base at pos x
-                tot_bases += 1
-
             tot_reads = samfile.count()
             map_reads = samfile.mapped
             unmap_reads = samfile.unmapped
@@ -74,8 +68,6 @@ def main():
             print 'Average read length: %.2f\n' % av_read_length
 
             print 'Average coverage: %.4f\n' % av_coverage
-
-            print 'Average coverage/base: %.4f\n' % (float(sum_bases) / tot_bases)
 
         samfile.close()
 
