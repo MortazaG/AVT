@@ -37,14 +37,19 @@ def main():
     if args.bam:
         samfile = pysam.AlignmentFile(args.bam, 'rb')
 
-        sum_bases = 0
-        tot_bases = 0
-        for c in samfile.pileup():
-            sum_bases += c.n
-            tot_bases += 1
+        if samfile.has_index() == False:
+            print '\nNo BAM index file could be found for %s.\
+                    \nUse \'samtools index %s\' to create an index file. \
+                    \nThe resulting file should be named as such: %s.bai\n'\
+                    % (args.bam, args.bam, args.bam)
+        else:
+            sum_bases = 0
+            tot_bases = 0
+            for c in samfile.pileup():
+                sum_bases += c.n
+                tot_bases += 1
 
-        print 'Average coverage/base: %.4f'% (float(sum_bases) / tot_bases)
-
+            print '\nAverage coverage/base: %.4f\n' % (float(sum_bases) / tot_bases)
 
         samfile.close()
 
