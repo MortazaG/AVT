@@ -49,7 +49,8 @@ def main():
                 sum_bases += c.n
                 tot_bases += 1
 
-            print '\nAverage coverage/base: %.4f\n' % (float(sum_bases) / tot_bases)
+            print '\nAverage coverage/base: %.4f' % (float(sum_bases) / tot_bases)
+            print 'Total number of reads\n: %d' % samfile.count()
 
         samfile.close()
 
