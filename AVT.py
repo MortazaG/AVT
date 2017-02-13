@@ -43,14 +43,36 @@ def main():
                     \nThe resulting file should be named as such: %s.bai\n'\
                     % (args.bam, args.bam, args.bam)
         else:
+
+            ref_size = 0
+            for length in samfile.lengths:
+                ref_size += length
+
+            for read in samfile.fetch():
+                read_length = len(read.seq)
+                break
+
             sum_bases = 0
             tot_bases = 0
             for c in samfile.pileup():
-                sum_bases += c.n
+                sum_bases += c.n      # c.n gives us the coverage of base at pos x
                 tot_bases += 1
 
-            print '\nAverage coverage/base: %.4f' % (float(sum_bases) / tot_bases)
-            print 'Total number of reads\n: %d' % samfile.count()
+            tot_reads = samfile.count()
+            map_reads = samfile.mapped
+            unmap_reads = samfile.unmapped
+
+            av_coverage = (read_length * map_reads) / float(ref_size)
+
+            print 'Reference size: %d' % ref_size
+            print 'Total number of reads: %d' % tot_reads
+            print 'Total number of mapped reads: %d' % map_reads
+            print 'Total number of unmapped reads: %d' % unmap_reads
+            print 'Read length: %d\n' % read_length
+
+            print 'Average coverage: %.4f\n' % av_coverage
+
+            print 'Average coverage/base: %.4f\n' % (float(sum_bases) / tot_bases)
 
         samfile.close()
 
