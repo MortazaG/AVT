@@ -42,15 +42,12 @@ def main():
                     \nUse \'samtools index %s\' to create an index file. \
                     \nThe resulting file should be named as such: %s.bai\n'\
                     % (args.bam, args.bam, args.bam)
+
         else:
 
             ref_size = 0
             for length in samfile.lengths:
                 ref_size += length
-
-            for read in samfile.fetch():
-                read_length = len(read.seq)
-                break
 
             sum_bases = 0
             tot_bases = 0
@@ -62,13 +59,19 @@ def main():
             map_reads = samfile.mapped
             unmap_reads = samfile.unmapped
 
-            av_coverage = (read_length * map_reads) / float(ref_size)
+            sum_read_length = 0
+            for read in samfile.fetch():
+                sum_read_length += len(read.seq)
 
-            print 'Reference size: %d' % ref_size
+            av_read_length = sum_read_length / float(map_reads)
+
+            av_coverage = (av_read_length * map_reads) / float(ref_size)
+
+            print '\nReference size: %d' % ref_size
             print 'Total number of reads: %d' % tot_reads
-            print 'Total number of mapped reads: %d' % map_reads
-            print 'Total number of unmapped reads: %d' % unmap_reads
-            print 'Read length: %d\n' % read_length
+            print 'Mapped reads: %d' % map_reads
+            print 'Unmapped reads: %d' % unmap_reads
+            print 'Average read length: %.2f\n' % av_read_length
 
             print 'Average coverage: %.4f\n' % av_coverage
 
