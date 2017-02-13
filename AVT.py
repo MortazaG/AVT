@@ -43,6 +43,7 @@ def main():
             sum_bases += c.n
             tot_bases += 1
 
+        print 'Average coverage/base: %.4f'% (float(sum_bases) / tot_bases)
 
 
         samfile.close()
