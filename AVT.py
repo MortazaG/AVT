@@ -36,7 +36,16 @@ def main():
 
     if args.bam:
         samfile = pysam.AlignmentFile(args.bam, 'rb')
-        print 'Sucessfully opened BAM file!'
+
+        sum_bases = 0
+        tot_bases = 0
+        for c in samfile.pileup():
+            sum_bases += c.n
+            tot_bases += 1
+
+
+
+        samfile.close()
 
 if __name__ == "__main__":
     main()
