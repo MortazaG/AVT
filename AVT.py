@@ -71,6 +71,7 @@ def fetch_bam(bf):
         # Achieved by summing up the lengths of individual references,
         # such as chromosomes.
         ref_size = 0
+
         for length in samfile.lengths:
             ref_size += length
 
@@ -103,8 +104,75 @@ def fetch_bam(bf):
         print 'Average read length: %.2f\n' % av_read_length
 
         print 'Average coverage: %.4f' % av_coverage
+        # print 'GC content: %.2f%%\n' % (sum(gc_read)/len(gc_read))
+
+        bam_graphs(samfile)
 
         samfile.close()
+
+def bam_graphs(sf):
+    '''
+    Produce necessary graphs for BAM file.
+    - Coverage per reference
+    - Coverage per position for each reference
+    '''
+
+    # Produce 'coverage per reference' graph
+    refs = sf.references
+    refs_lengths = sf.lengths
+
+    refs_range = [r+1 for r in range(len(refs))]
+    refs_coverage = []
+
+    for i in range(len(refs)):
+
+        sum_read_length = 0
+        amt_reads = 0
+        for read in sf.fetch(refs[i]):
+            sum_read_length += len(read.seq)
+            amt_reads += 1
+
+        av_read_length = sum_read_length / amt_reads
+        tot_reads = sf.count(refs[i])
+        ref_length = refs_lengths[i]
+
+        ref_coverage = (tot_reads * av_read_length) / float(ref_length)
+        refs_coverage.append(ref_coverage)
+
+    plt.figure('cov_ref')
+    plt.plot(refs_range, refs_coverage)
+
+    plt.title('Coverage per reference\n')
+    plt.ylabel('Mean Coverage')
+    plt.xlabel('Reference')
+    plt.xticks(refs_range, refs, rotation='vertical')
+    plt.grid()
+
+    plt.savefig('graphs/' + args.bam + '.pdf', bbox_inches='tight')
+    plt.close()
+
+    # Produce 'coverage per position' graph for each reference
+    # for i in range(len(refs)):
+    for ref in refs:
+
+        ref_pos = []
+        ref_pos_coverage = []
+        for b in sf.pileup(ref):
+            ref_pos.append(b.pos)
+            ref_pos_coverage.append(b.n)
+
+        plt.figure(1)
+        plt.plot(ref_pos, ref_pos_coverage)
+
+        plt.title('Coverage across reference ' + ref + '\n')
+        plt.ylabel('Mean Coverage')
+        plt.xlabel('Position (bp)')
+        plt.grid()
+
+        plt.savefig('graphs/' + ref + '.pdf', bbox_inches='tight')
+        plt.close()
+
+
 
 def main():
 
