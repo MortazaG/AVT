@@ -38,15 +38,15 @@ def fetch_fasta(ff):
     Fetch and print necessary information from a FASTA file.
     FASTA filehandle is received through the ff argument.
     '''
-
-    # Use SeqIO from BipPython to parse fasta file.
-    for fasta_record in SeqIO.parse(ff, 'fasta'):
-        gc_content = SeqUtils.GC(fasta_record.seq)
-
-    # Write information from FASTA file to txt file.
     with open('results/' + args.fasta + '.txt', 'w') as save_fasta:
-        save_fasta.write('ID: %s\r\n' % fasta_record.id)
-        save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
+
+        # Use SeqIO from BipPython to parse fasta file.
+        for fasta_record in SeqIO.parse(ff, 'fasta'):
+            gc_content = SeqUtils.GC(fasta_record.seq)
+
+            # Write information from FASTA file to txt file.
+            save_fasta.write('ID: %s\r\n' % fasta_record.id)
+            save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
 
         print '\nResults from FASTA file have been written to: results/%s.txt\n'\
                 % args.fasta
@@ -136,28 +136,41 @@ def bam_graphs(sf):
 
     import matplotlib.pyplot as plt
 
-    # Produce 'coverage per reference' graph
+    # Produce 'coverage per reference' graph, following:
+    # coverage = (read_length*read_count)/reference_length
+    # We will be using the average read length for each reference
+
+    # Create lists to hold reference names and lengths
     refs = sf.references
     refs_lengths = sf.lengths
 
-    refs_range = [r+1 for r in range(len(refs))]
+    # Initialize list which will contain coverage for each reference
     refs_coverage = []
 
+    # Loop through references by index nr and calculate coverage
     for i in range(len(refs)):
 
+        # Initialize sum of read lengths, so that we can calculate average
         sum_read_length = 0
-        amt_reads = 0
+
         for read in sf.fetch(refs[i]):
             sum_read_length += len(read.seq)
-            amt_reads += 1
 
-        av_read_length = sum_read_length / amt_reads
+        # Create list to hold total reads for reference
         tot_reads = sf.count(refs[i])
+        av_read_length = sum_read_length / tot_reads
+
+        # Define the length of current reference
         ref_length = refs_lengths[i]
 
+        # Calculate coverage for reference according to given formula
         ref_coverage = (tot_reads * av_read_length) / float(ref_length)
         refs_coverage.append(ref_coverage)
 
+    # Produce numerical values for x axis
+    refs_range = [r+1 for r in range(len(refs))]
+
+    # Plot graph using matplotlib.pyplot
     plt.figure('cov_ref')
     plt.plot(refs_range, refs_coverage)
 
@@ -170,16 +183,19 @@ def bam_graphs(sf):
     plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
     plt.close()
 
-    # Produce 'coverage per position' graph for each reference
-    # for i in range(len(refs)):
+    # Produce 'coverage per position' graph for each individual reference
     for ref in refs:
 
+        # Initialize empty positional and coverage lists
         ref_pos = []
         ref_pos_coverage = []
+
+        # Use pysam pileup to get coverage for each position in reference
         for b in sf.pileup(ref):
             ref_pos.append(b.pos)
             ref_pos_coverage.append(b.n)
 
+        # Plot graph using matplotlib
         plt.figure(1)
         plt.plot(ref_pos, ref_pos_coverage)
 
@@ -200,6 +216,7 @@ def main():
     Main function reads in FASTA and BAM files by calling fetch_fasta()
     and fetch_bam() functions with the user input as argument.
     '''
+
     if args.fasta and args.bam:
         print 'helo'
 
