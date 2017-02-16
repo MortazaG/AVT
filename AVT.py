@@ -60,20 +60,28 @@ def fetch_bam(bf):
 
     samfile = pysam.AlignmentFile(args.bam, 'rb')
 
-    # Check if BAM file has an index file. If False, give info about
-    # how to create index file using samtools.
-    # Alternatively we could use check_index() method as well.
+    # Check if BAM file has an index file. If False, give option
+    # to create index file.
     if samfile.has_index() == False:
-        print '\nNo BAM index file could be found for %s.\
-                \nUse \'samtools index %s\' to create an index file. \
-                \nThe resulting file should be named as such: %s.bai\n'\
-                % (args.bam, args.bam, args.bam)
+        print '\nNo BAM index file could be found for %s' % (args.bam)
+
+        bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
+
+        if bam_bai == 'y':
+            pysam.index(args.bam)
+            print '\nIndex file was successfully produced as: %s.bai\n'\
+                    % args.bam
+
+        elif bam_bai == 'n':
+            print '\nThis program can\'t be run without BAM index file.\n'
+
+        else:
+            print '\nSomething wen\'t wrong...\n'
 
     else:
 
         # Calculate the total length of the reference sequence.
-        # Achieved by summing up the lengths of individual references,
-        # such as chromosomes.
+        # Achieved by summing up the lengths of individual references.
         ref_size = 0
 
         for length in samfile.lengths:
@@ -100,7 +108,7 @@ def fetch_bam(bf):
         # using the average read length.
         av_coverage = (av_read_length * map_reads) / float(ref_size)
 
-        # Write available information from the BAM file to txt file
+        # Write extracted information from the BAM file to txt file
         with open('results/' + args.bam + '.txt', 'w') as save_bam:
 
             save_bam.write('Reference size: %d\r\n' % ref_size)
@@ -123,7 +131,7 @@ def bam_graphs(sf):
     '''
     Produce necessary graphs for BAM file.
     - Coverage per reference
-    - Coverage per position for each reference
+    - Coverage per position for each individual reference
     '''
 
     import matplotlib.pyplot as plt
@@ -159,7 +167,7 @@ def bam_graphs(sf):
     plt.xticks(refs_range, refs, rotation='vertical')
     plt.grid()
 
-    plt.savefig('results/graphs/' + args.bam + '.pdf', bbox_inches='tight')
+    plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
     plt.close()
 
     # Produce 'coverage per position' graph for each reference
@@ -180,7 +188,7 @@ def bam_graphs(sf):
         plt.xlabel('Position (bp)')
         plt.grid()
 
-        plt.savefig('results/graphs/' + ref + '.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
         plt.close()
 
     print '\n->Graphs for %s have been produced in results/graphs/\n' % args.bam
