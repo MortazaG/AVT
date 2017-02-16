@@ -6,7 +6,6 @@
 
 import sys
 import pysam
-import matplotlib.pyplot as plt
 from Bio import SeqIO, SeqUtils
 
 # Check if user has argparse module available.
@@ -44,8 +43,13 @@ def fetch_fasta(ff):
     for fasta_record in SeqIO.parse(ff, 'fasta'):
         gc_content = SeqUtils.GC(fasta_record.seq)
 
-        print 'ID: %s' % fasta_record.id
-        print 'GC content: %.2f%%\n' % gc_content
+    # Write information from FASTA file to txt file.
+    with open('results/' + args.fasta + '.txt', 'w') as save_fasta:
+        save_fasta.write('ID: %s\r\n' % fasta_record.id)
+        save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
+
+        print '\nResults from FASTA file have been written to: results/%s.txt\n'\
+                % args.fasta
 
 def fetch_bam(bf):
 
@@ -96,26 +100,33 @@ def fetch_bam(bf):
         # using the average read length.
         av_coverage = (av_read_length * map_reads) / float(ref_size)
 
-        # Print out all the available information from the BAM file.
-        print '\nReference size: %d' % ref_size
-        print 'Total number of reads: %d' % tot_reads
-        print 'Mapped reads: %d' % map_reads
-        print 'Unmapped reads: %d' % unmap_reads
-        print 'Average read length: %.2f\n' % av_read_length
+        # Write available information from the BAM file to txt file
+        with open('results/' + args.bam + '.txt', 'w') as save_bam:
 
-        print 'Average coverage: %.4f' % av_coverage
-        # print 'GC content: %.2f%%\n' % (sum(gc_read)/len(gc_read))
+            save_bam.write('Reference size: %d\r\n' % ref_size)
+            save_bam.write('Total number of reads: %d\r\n' % tot_reads)
+            save_bam.write('Mapped reads: %d\r\n' % map_reads)
+            save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
+            save_bam.write('Average read length: %.2f\r\n' % av_read_length)
+            save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
 
+            print '\n->Results from BAM file have been written to: results/%s.txt\n'\
+                    % args.bam
+
+        # Call on bam_graphs to produce necessary graphs for BAM file
         bam_graphs(samfile)
 
         samfile.close()
 
 def bam_graphs(sf):
+
     '''
     Produce necessary graphs for BAM file.
     - Coverage per reference
     - Coverage per position for each reference
     '''
+
+    import matplotlib.pyplot as plt
 
     # Produce 'coverage per reference' graph
     refs = sf.references
@@ -148,7 +159,7 @@ def bam_graphs(sf):
     plt.xticks(refs_range, refs, rotation='vertical')
     plt.grid()
 
-    plt.savefig('graphs/' + args.bam + '.pdf', bbox_inches='tight')
+    plt.savefig('results/graphs/' + args.bam + '.pdf', bbox_inches='tight')
     plt.close()
 
     # Produce 'coverage per position' graph for each reference
@@ -169,9 +180,10 @@ def bam_graphs(sf):
         plt.xlabel('Position (bp)')
         plt.grid()
 
-        plt.savefig('graphs/' + ref + '.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + ref + '.pdf', bbox_inches='tight')
         plt.close()
 
+    print '\n->Graphs for %s have been produced in results/graphs/\n' % args.bam
 
 
 def main():
