@@ -92,7 +92,7 @@ def fetch_bam(bf):
 
         # Calculate the sum of the reads lengths
         sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
-        sum_reads_lengths = sum(sum_reads_length)
+        sum_reads_lengths = sum(sum_reads_lengths)
 
         # Define average read length
         av_read_length = sum_reads_lengths / float(map_reads)
