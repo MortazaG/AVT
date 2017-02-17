@@ -73,7 +73,7 @@ def fetch_bam(bf):
                     % args.bam
 
         elif bam_bai == 'n':
-            print '\nThis program can\'t be run without BAM index file.\n'
+            print '\nThis program can\'t be run without a BAM index file.\n'
 
         else:
             print '\nSomething wen\'t wrong...\n'
@@ -92,7 +92,7 @@ def fetch_bam(bf):
 
         # Calculate the sum of the reads lengths
         sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
-        sum_reads_lengths = sum(sum_reads_length)
+        sum_reads_lengths = sum(sum_reads_lengths)
 
         # Define average read length
         av_read_length = sum_reads_lengths / float(map_reads)
@@ -137,64 +137,77 @@ def bam_graphs(sf):
     refs = sf.references
     refs_lengths = sf.lengths
 
-    # Initialize list which will contain coverage for each reference
-    refs_coverage = []
+    # Allow user to choose which graphs will be produced
+    opt1 = raw_input('Produce \'Coverage per reference\' graph? [y/n]: ').lower()
+    opt2 = raw_input('Produce \'Coverage per position\' graph? [y/n]: ').lower()
 
-    # Loop through references by index nr and calculate coverage
-    for i in range(len(refs)):
+    if opt1 == 'y':
 
-        # Define sum of read length for reference, so that we can calculate
-        # average read length. This is done using pysams fetch()
-        sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
-        sum_read_length = sum(sum_read_length)
+        # Initialize list which will contain coverage for each reference
+        refs_coverage = []
 
-        # Create list to hold total reads for reference
-        tot_reads = sf.count(refs[i])
-        av_read_length = sum_read_length / tot_reads
+        # Loop through references by index nr and calculate coverage
+        for i in range(len(refs)):
 
-        # Define the length of current reference
-        ref_length = refs_lengths[i]
+            # Define sum of read length for reference, so that we can calculate
+            # average read length. This is done using pysams fetch()
+            sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
+            sum_read_length = sum(sum_read_length)
 
-        # Calculate coverage for reference according to given formula
-        ref_coverage = (tot_reads * av_read_length) / float(ref_length)
-        refs_coverage.append(ref_coverage)
+            # Create list to hold total reads for reference
+            tot_reads = sf.count(refs[i])
+            av_read_length = sum_read_length / tot_reads
 
-    # Produce numerical values for x axis
-    refs_range = [r+1 for r in range(len(refs))]
+            # Define the length of current reference
+            ref_length = refs_lengths[i]
 
-    # Plot graph using matplotlib.pyplot
-    plt.figure('cov_ref')
-    plt.plot(refs_range, refs_coverage)
+            # Calculate coverage for reference according to given formula
+            ref_coverage = (tot_reads * av_read_length) / float(ref_length)
+            refs_coverage.append(ref_coverage)
 
-    plt.title('Coverage per reference\n')
-    plt.ylabel('Mean Coverage')
-    plt.xlabel('Reference')
-    plt.xticks(refs_range, refs, rotation='vertical')
-    plt.grid()
+        # Produce numerical values for x axis
+        refs_range = [r+1 for r in range(len(refs))]
 
-    plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
-    plt.close()
+        # Plot graph using matplotlib.pyplot
+        plt.figure('cov_ref')
+        plt.plot(refs_range, refs_coverage)
 
-    # Produce 'coverage per position' graph for each individual reference
-    for ref in refs:
-
-        # Use pysam pileup to get coverage for each position in reference
-        ref_pos = [p.pos for p in sf.pileup(ref)]
-        ref_pos_coverage = [p.n for p in sf.pileup(ref)]
-
-        # Plot graph using matplotlib
-        plt.figure(1)
-        plt.plot(ref_pos, ref_pos_coverage)
-
-        plt.title('Coverage across reference ' + ref + '\n')
+        plt.title('Coverage per reference\n')
         plt.ylabel('Mean Coverage')
-        plt.xlabel('Position (bp)')
+        plt.xlabel('Reference')
+        plt.xticks(refs_range, refs, rotation='vertical')
         plt.grid()
 
-        plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
         plt.close()
 
-    print '\n->Graphs for %s have been produced in results/graphs/\n' % args.bam
+        print '\n\'Coverage per reference graph\' produced'
+
+    if opt2 == 'y':
+
+        # Produce 'coverage per position' graph for each individual reference
+        for ref in refs:
+
+            # Use pysam pileup to get coverage for each position in reference
+            ref_pos = [p.pos for p in sf.pileup(ref)]
+            ref_pos_coverage = [p.n for p in sf.pileup(ref)]
+
+            # Plot graph using matplotlib
+            plt.figure(1)
+            plt.plot(ref_pos, ref_pos_coverage)
+
+            plt.title('Coverage across reference ' + ref + '\n')
+            plt.ylabel('Mean Coverage')
+            plt.xlabel('Position (bp)')
+            plt.grid()
+
+            plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
+            plt.close()
+
+        print '\'Coverage per position\' graph produced'
+
+    print '\n->Graphs for %s have successfully been produced in results/graphs/\n'\
+            % args.bam
 
 
 def main():
@@ -204,8 +217,9 @@ def main():
     and fetch_bam() functions with the user input as argument.
     '''
 
+    # Future capability to be added
     if args.fasta and args.bam:
-        print 'helo'
+        print 'Sorry, can\'t do that yet...'
 
     # Check if args.fasta is present and then call fetch_fasta with
     # args.fasta as argument.
