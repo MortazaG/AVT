@@ -244,4 +244,14 @@ def main():
 # Makes sure main() is only run when this script is called from
 # from itself.
 if __name__ == "__main__":
+
+    # Create necessary folders
+    import os
+
+    if not os.path.exists('results/graphs'):
+        try:
+            os.makedirs('results/graphs')
+        except OSError:
+            pass
+
     main()
