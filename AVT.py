@@ -82,27 +82,20 @@ def fetch_bam(bf):
 
         # Calculate the total length of the reference sequence.
         # Achieved by summing up the lengths of individual references.
-        ref_size = 0
-
-        for length in samfile.lengths:
-            ref_size += length
+        ref_size = [length for length in samfile.lengths]
+        ref_size = sum(ref_size)
 
         # Fetch amount of reads that are available.
         tot_reads = samfile.count()
         map_reads = samfile.mapped
         unmap_reads = samfile.unmapped
 
-        # Calculate the sum of the read lengths and
-        # the GC content of each read.
-        sum_read_length = 0
-        gc_read = []
-
-        for read in samfile.fetch():
-            sum_read_length += len(read.seq)
-            gc_read.append(SeqUtils.GC(read.seq))
+        # Calculate the sum of the reads lengths
+        sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
+        sum_reads_lengths = sum(sum_reads_length)
 
         # Define average read length
-        av_read_length = sum_read_length / float(map_reads)
+        av_read_length = sum_reads_lengths / float(map_reads)
 
         # Calculate average coverage for the reference genome,
         # using the average read length.
