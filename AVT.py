@@ -38,18 +38,24 @@ def fetch_fasta(ff):
     Fetch and print necessary information from a FASTA file.
     FASTA filehandle is received through the ff argument.
     '''
-    with open('results/' + args.fasta + '.txt', 'w') as save_fasta:
 
-        # Use SeqIO from BipPython to parse fasta file.
-        for fasta_record in SeqIO.parse(ff, 'fasta'):
-            gc_content = SeqUtils.GC(fasta_record.seq)
+    # Ask user if they wan't to fetch information from FASTA file
+    opt1 = raw_input('Fetch information from %s? [y/n]: ' % args.fasta).lower()
 
-            # Write information from FASTA file to txt file.
-            save_fasta.write('ID: %s\r\n' % fasta_record.id)
-            save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
+    if opt1 == 'y':
 
-        print '\nResults from FASTA file have been written to: results/%s.txt\n'\
-                % args.fasta
+        with open('results/' + args.fasta + '.txt', 'w') as save_fasta:
+
+            # Use SeqIO from BipPython to parse fasta file.
+            for fasta_record in SeqIO.parse(ff, 'fasta'):
+                gc_content = SeqUtils.GC(fasta_record.seq)
+
+                # Write information from FASTA file to txt file.
+                save_fasta.write('ID: %s\r\n' % fasta_record.id)
+                save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
+
+            print '\n-> Results from FASTA file have been written to: results/%s.txt\n'\
+                    % args.fasta
 
 def fetch_bam(bf):
 
@@ -58,66 +64,74 @@ def fetch_bam(bf):
     BAM filehandle is received through the bf argument.
     '''
 
+
+
+    # Ask user if they wan't to fetch information from BAM file
+    opt1 = raw_input('Fetch information from %s? [y/n]: ' % args.bam).lower()
+
     samfile = pysam.AlignmentFile(args.bam, 'rb')
 
-    # Check if BAM file has an index file. If False, give option
-    # to create index file.
-    if samfile.has_index() == False:
-        print '\nNo BAM index file could be found for %s' % (args.bam)
+    if opt1 == 'y':
 
-        bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
+        # Check if BAM file has an index file. If False, give option
+        # to create index file.
+        if samfile.has_index() == False:
+            print '\nNo BAM index file could be found for %s' % (args.bam)
 
-        if bam_bai == 'y':
-            pysam.index(args.bam)
-            print '\nIndex file was successfully produced as: %s.bai\n'\
-                    % args.bam
+            bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
 
-        elif bam_bai == 'n':
-            print '\nThis program can\'t be run without a BAM index file.\n'
+            if bam_bai == 'y':
+                pysam.index(args.bam)
+                print '\nIndex file was successfully produced as: %s.bai\n'\
+                        % args.bam
+                exit()
+
+            elif bam_bai == 'n':
+                print '\nThis program can\'t be run without a BAM index file.\n'
+
+            else:
+                print '\nSomething wen\'t wrong...\n'
 
         else:
-            print '\nSomething wen\'t wrong...\n'
 
-    else:
+            # Calculate the total length of the reference sequence.
+            # Achieved by summing up the lengths of individual references.
+            ref_size = [length for length in samfile.lengths]
+            ref_size = sum(ref_size)
 
-        # Calculate the total length of the reference sequence.
-        # Achieved by summing up the lengths of individual references.
-        ref_size = [length for length in samfile.lengths]
-        ref_size = sum(ref_size)
+            # Fetch amount of reads that are available.
+            tot_reads = samfile.count()
+            map_reads = samfile.mapped
+            unmap_reads = samfile.unmapped
 
-        # Fetch amount of reads that are available.
-        tot_reads = samfile.count()
-        map_reads = samfile.mapped
-        unmap_reads = samfile.unmapped
+            # Calculate the sum of the reads lengths
+            sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
+            sum_reads_lengths = sum(sum_reads_lengths)
 
-        # Calculate the sum of the reads lengths
-        sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
-        sum_reads_lengths = sum(sum_reads_lengths)
+            # Define average read length
+            av_read_length = sum_reads_lengths / float(map_reads)
 
-        # Define average read length
-        av_read_length = sum_reads_lengths / float(map_reads)
+            # Calculate average coverage for the reference genome,
+            # using the average read length.
+            av_coverage = (av_read_length * map_reads) / float(ref_size)
 
-        # Calculate average coverage for the reference genome,
-        # using the average read length.
-        av_coverage = (av_read_length * map_reads) / float(ref_size)
+            # Write extracted information from the BAM file to txt file
+            with open('results/' + args.bam + '.txt', 'w') as save_bam:
 
-        # Write extracted information from the BAM file to txt file
-        with open('results/' + args.bam + '.txt', 'w') as save_bam:
+                save_bam.write('Reference size: %d\r\n' % ref_size)
+                save_bam.write('Total number of reads: %d\r\n' % tot_reads)
+                save_bam.write('Mapped reads: %d\r\n' % map_reads)
+                save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
+                save_bam.write('Average read length: %.2f\r\n' % av_read_length)
+                save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
 
-            save_bam.write('Reference size: %d\r\n' % ref_size)
-            save_bam.write('Total number of reads: %d\r\n' % tot_reads)
-            save_bam.write('Mapped reads: %d\r\n' % map_reads)
-            save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
-            save_bam.write('Average read length: %.2f\r\n' % av_read_length)
-            save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
+                print '\n-> Results from BAM file have been written to: results/%s.txt\n'\
+                        % args.bam
 
-            print '\n->Results from BAM file have been written to: results/%s.txt\n'\
-                    % args.bam
+    # Call on bam_graphs to produce necessary graphs for BAM file
+    bam_graphs(samfile)
 
-        # Call on bam_graphs to produce necessary graphs for BAM file
-        bam_graphs(samfile)
-
-        samfile.close()
+    samfile.close()
 
 def bam_graphs(sf):
 
@@ -137,7 +151,7 @@ def bam_graphs(sf):
     refs = sf.references
     refs_lengths = sf.lengths
 
-    # Allow user to choose which graphs will be produced
+    # Allow user to choose which of the graphs will be produced
     opt1 = raw_input('Produce \'Coverage per reference\' graph? [y/n]: ').lower()
     opt2 = raw_input('Produce \'Coverage per position\' graph? [y/n]: ').lower()
 
@@ -181,7 +195,7 @@ def bam_graphs(sf):
         plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
         plt.close()
 
-        print '\n\'Coverage per reference graph\' produced'
+        print '\n->\'Coverage per reference graph\' produced in results/graphs/'
 
     if opt2 == 'y':
 
@@ -204,11 +218,7 @@ def bam_graphs(sf):
             plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
             plt.close()
 
-        print '\'Coverage per position\' graph produced'
-
-    print '\n->Graphs for %s have successfully been produced in results/graphs/\n'\
-            % args.bam
-
+        print '->\'Coverage per position\' graph produced in results/graphs/\n'
 
 def main():
 
