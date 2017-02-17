@@ -150,11 +150,10 @@ def bam_graphs(sf):
     # Loop through references by index nr and calculate coverage
     for i in range(len(refs)):
 
-        # Initialize sum of read lengths, so that we can calculate average
-        sum_read_length = 0
-
-        for read in sf.fetch(refs[i]):
-            sum_read_length += len(read.seq)
+        # Define sum of read length for reference, so that we can calculate
+        # average read length. This is done using pysams fetch()
+        sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
+        sum_read_length = sum(sum_read_length)
 
         # Create list to hold total reads for reference
         tot_reads = sf.count(refs[i])
@@ -186,14 +185,9 @@ def bam_graphs(sf):
     # Produce 'coverage per position' graph for each individual reference
     for ref in refs:
 
-        # Initialize empty positional and coverage lists
-        ref_pos = []
-        ref_pos_coverage = []
-
         # Use pysam pileup to get coverage for each position in reference
-        for b in sf.pileup(ref):
-            ref_pos.append(b.pos)
-            ref_pos_coverage.append(b.n)
+        ref_pos = [p.pos for p in sf.pileup(ref)]
+        ref_pos_coverage = [p.n for p in sf.pileup(ref)]
 
         # Plot graph using matplotlib
         plt.figure(1)
