@@ -6,6 +6,7 @@
 
 import sys
 import pysam
+import matplotlib.pyplot as plt
 from Bio import SeqIO, SeqUtils
 
 # Check if user has argparse module available.
@@ -60,11 +61,9 @@ def fetch_fasta(ff):
 def fetch_bam(bf):
 
     '''
-    Fetch and print necessary information from a BAM file.
+    Fetch and wite necessary information from a BAM file to txt file.
     BAM filehandle is received through the bf argument.
     '''
-
-
 
     # Ask user if they wan't to fetch information from BAM file
     opt1 = raw_input('Fetch information from %s? [y/n]: ' % args.bam).lower()
@@ -133,6 +132,88 @@ def fetch_bam(bf):
 
     samfile.close()
 
+def bam_cov_ref(sf):
+
+    '''
+    Produce 'coverage per reference' graph, following:
+    coverage = (read_length*read_count)/reference_length
+    We will be using the average read length for each reference
+    '''
+
+    # Create lists to hold reference names and lengths
+    refs = sf.references
+    refs_lengths = sf.lengths
+
+    # Initialize list which will contain coverage for each reference
+    refs_coverage = []
+
+    # Loop through references by index nr and calculate coverage
+    for i in range(len(refs)):
+
+        # Define sum of read length for reference, so that we can calculate
+        # average read length. This is done using pysams fetch()
+        sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
+        sum_read_length = sum(sum_read_length)
+
+        # Create list to hold total reads for reference
+        tot_reads = sf.count(refs[i])
+        av_read_length = sum_read_length / tot_reads
+
+        # Define the length of current reference
+        ref_length = refs_lengths[i]
+
+        # Calculate coverage for reference according to given formula
+        ref_coverage = (tot_reads * av_read_length) / float(ref_length)
+        refs_coverage.append(ref_coverage)
+
+    # Produce numerical values for x axis
+    refs_range = [r+1 for r in range(len(refs))]
+
+    # Plot graph using matplotlib.pyplot
+    plt.figure('cov_ref')
+    plt.plot(refs_range, refs_coverage)
+
+    plt.title('Coverage per reference\n')
+    plt.ylabel('Mean Coverage')
+    plt.xlabel('Reference')
+    plt.xticks(refs_range, refs, rotation='vertical')
+    plt.grid()
+
+    plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
+    plt.close()
+
+    print '\n->\'Coverage per reference graph\' produced in results/graphs/'
+
+def bam_cov_pos(sf):
+
+    '''
+    Produce 'coverage per position' graph for each individual reference
+    '''
+
+    # Create lists to hold reference names and lengths
+    refs = sf.references
+
+    # Loop through individual references
+    for ref in refs:
+
+        # Use pysam pileup to get coverage for each position in reference
+        ref_pos = [p.pos for p in sf.pileup(ref)]
+        ref_pos_coverage = [p.n for p in sf.pileup(ref)]
+
+        # Plot graph using matplotlib
+        plt.figure()
+        plt.plot(ref_pos, ref_pos_coverage)
+
+        plt.title('Coverage across reference ' + ref + '\n')
+        plt.ylabel('Mean Coverage')
+        plt.xlabel('Position (bp)')
+        plt.grid()
+
+        plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
+        plt.close()
+
+    print '->\'Coverage per position\' graph produced in results/graphs/\n'
+
 def bam_graphs(sf):
 
     '''
@@ -141,84 +222,15 @@ def bam_graphs(sf):
     - Coverage per position for each individual reference
     '''
 
-    import matplotlib.pyplot as plt
-
-    # Produce 'coverage per reference' graph, following:
-    # coverage = (read_length*read_count)/reference_length
-    # We will be using the average read length for each reference
-
-    # Create lists to hold reference names and lengths
-    refs = sf.references
-    refs_lengths = sf.lengths
-
     # Allow user to choose which of the graphs will be produced
     opt1 = raw_input('Produce \'Coverage per reference\' graph? [y/n]: ').lower()
     opt2 = raw_input('Produce \'Coverage per position\' graph? [y/n]: ').lower()
 
     if opt1 == 'y':
-
-        # Initialize list which will contain coverage for each reference
-        refs_coverage = []
-
-        # Loop through references by index nr and calculate coverage
-        for i in range(len(refs)):
-
-            # Define sum of read length for reference, so that we can calculate
-            # average read length. This is done using pysams fetch()
-            sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
-            sum_read_length = sum(sum_read_length)
-
-            # Create list to hold total reads for reference
-            tot_reads = sf.count(refs[i])
-            av_read_length = sum_read_length / tot_reads
-
-            # Define the length of current reference
-            ref_length = refs_lengths[i]
-
-            # Calculate coverage for reference according to given formula
-            ref_coverage = (tot_reads * av_read_length) / float(ref_length)
-            refs_coverage.append(ref_coverage)
-
-        # Produce numerical values for x axis
-        refs_range = [r+1 for r in range(len(refs))]
-
-        # Plot graph using matplotlib.pyplot
-        plt.figure('cov_ref')
-        plt.plot(refs_range, refs_coverage)
-
-        plt.title('Coverage per reference\n')
-        plt.ylabel('Mean Coverage')
-        plt.xlabel('Reference')
-        plt.xticks(refs_range, refs, rotation='vertical')
-        plt.grid()
-
-        plt.savefig('results/graphs/' + args.bam + '_cov_ref.pdf', bbox_inches='tight')
-        plt.close()
-
-        print '\n->\'Coverage per reference graph\' produced in results/graphs/'
+        bam_cov_ref(sf)
 
     if opt2 == 'y':
-
-        # Produce 'coverage per position' graph for each individual reference
-        for ref in refs:
-
-            # Use pysam pileup to get coverage for each position in reference
-            ref_pos = [p.pos for p in sf.pileup(ref)]
-            ref_pos_coverage = [p.n for p in sf.pileup(ref)]
-
-            # Plot graph using matplotlib
-            plt.figure(1)
-            plt.plot(ref_pos, ref_pos_coverage)
-
-            plt.title('Coverage across reference ' + ref + '\n')
-            plt.ylabel('Mean Coverage')
-            plt.xlabel('Position (bp)')
-            plt.grid()
-
-            plt.savefig('results/graphs/' + ref + '_cov.pdf', bbox_inches='tight')
-            plt.close()
-
-        print '->\'Coverage per position\' graph produced in results/graphs/\n'
+        bam_cov_pos(sf)
 
 def main():
 
@@ -245,12 +257,14 @@ def main():
 # from itself.
 if __name__ == "__main__":
 
-    # Create necessary folders
+    # Create necessary folders if they don't already exist
     import os
 
     if not os.path.exists('results/graphs'):
+
         try:
             os.makedirs('results/graphs')
+
         except OSError:
             pass
 
