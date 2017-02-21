@@ -40,6 +40,9 @@ def fetch_fasta(ff):
     '''
     Fetch and print necessary information from a FASTA file.
     FASTA filehandle is received through the ff argument.
+
+    Receives FASTA filename through ff argument.
+    Outputs information to txt file in results/
     '''
 
     # Open FASTA file
@@ -58,6 +61,9 @@ def bam_view(bf):
     '''
     Write necessary information from a BAM file to txt file.
     BAM filehandle is received through the bf argument.
+
+    Receives pysams samfile as argument through bf.
+    Outputs information to txt file in results/ folder.
     '''
 
     # Calculate the total length of the reference sequence.
@@ -97,6 +103,9 @@ def bam_cov_ref(bf):
     Produce 'coverage per reference' graph, following:
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
+
+    Receives pysams samfile as argument through bf.
+    Outputs graphs as pdf files in results/graphs/ folder.
     '''
 
     # Create lists to hold reference names and lengths
@@ -145,6 +154,9 @@ def bam_cov_pos(bf):
 
     '''
     Produce 'coverage per position' graph for each individual reference
+
+    Receive pysams samfile as argument through bf.
+    Outputs graph as a pdf file in results/graphs/ folder.
     '''
 
     # Create lists to hold reference names and lengths
@@ -166,7 +178,7 @@ def bam_cov_pos(bf):
         plt.xlabel('Position (bp)')
         plt.grid()
 
-        plt.savefig('results/graphs/' + args.bcp + ref + '_cov.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + args.bcp + ref + '_cov_pos.pdf', bbox_inches='tight')
         plt.close()
 
 def fetch_bam(bf):
@@ -174,7 +186,7 @@ def fetch_bam(bf):
     '''
     BAM filename is received through the bf argument and is then
     checked for Index file. With the Index file, samfile is created
-    and passed on as an argument to the respective funtion.
+    as a variable and passed on as an argument to the respective funtion.
     '''
 
     # Open BAM file using pysam
@@ -198,12 +210,13 @@ def fetch_bam(bf):
 
         exit()
 
+    # Call the respective function with samfile as argument.
     if args.bam:
         bam_view(samfile)
 
     if args.bcr:
         bam_cov_ref(samfile)
-        
+
     if args.bcp:
         bam_cov_pos(samfile)
 
@@ -221,7 +234,7 @@ def main():
     if args.fasta:
         fetch_fasta(args.fasta)
 
-    # Check which of the bam arguments is present and call open_bam on it.
+    # Check which of the bam arguments is present and call fetch_bam on it.
     if args.bam:
         fetch_bam(args.bam)
 
