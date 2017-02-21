@@ -176,7 +176,7 @@ def fetch_bam(bf):
     checked for Index file. With the Index file, samfile is created
     and passed on as an argument to the respective funtion.
     '''
-    
+
     # Open BAM file using pysam
     samfile = pysam.AlignmentFile(bf, 'rb')
 
@@ -189,7 +189,6 @@ def fetch_bam(bf):
 
         if bam_bai == 'y':
             pysam.index(bf)
-            exit()
 
         elif bam_bai == 'n':
             print '\nThis program can\'t be run without a BAM index file.\n'
@@ -197,11 +196,15 @@ def fetch_bam(bf):
         else:
             print '\nSomething wen\'t wrong...\n'
 
-    elif args.bam:
+        exit()
+
+    if args.bam:
         bam_view(samfile)
-    elif args.bcr:
+
+    if args.bcr:
         bam_cov_ref(samfile)
-    elif args.bcp:
+        
+    if args.bcp:
         bam_cov_pos(samfile)
 
     samfile.close()
