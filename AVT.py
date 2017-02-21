@@ -29,7 +29,7 @@ except ImportError:
 parser = argparse.ArgumentParser(prog="avt.py")
 parser.add_argument("-f", "--fasta", help="FASTA - Overview")
 parser.add_argument("-b", "--bam", help="BAM - Overview")
-parser.add_argument("-bcf", help="BAM Graph - Coverage per reference ")
+parser.add_argument("-bcr", help="BAM Graph - Coverage per reference ")
 parser.add_argument("-bcp", help="BAM Graph - Coverage per position")
 
 # Parse the above arguments, so that they can be used in the script.
@@ -53,72 +53,43 @@ def fetch_fasta(ff):
             save_fasta.write('ID: %s\r\n' % fasta_record.id)
             save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
 
-        print '\n-> Results from FASTA file have been written to: results/%s.txt\n'\
-                % args.fasta
-
-def fetch_bam(bf):
+def bam_view(bf):
 
     '''
-    Fetch and wite necessary information from a BAM file to txt file.
+    Write necessary information from a BAM file to txt file.
     BAM filehandle is received through the bf argument.
     '''
 
-    # Open BAM file using pysam
-    samfile = pysam.AlignmentFile(bf, 'rb')
+    # Calculate the total length of the reference sequence.
+    # Achieved by summing up the lengths of individual references.
+    ref_size = [length for length in bf.lengths]
+    ref_size = sum(ref_size)
 
-    # Check if BAM file has an index file. If False, give option
-    # to create index file.
-    if samfile.has_index() == False:
-        print '\nNo BAM index file could be found for %s' % (bf)
+    # Fetch amount of reads that are available.
+    tot_reads = bf.count()
+    map_reads = bf.mapped
+    unmap_reads = bf.unmapped
 
-        bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
+    # Calculate the sum of the reads lengths
+    sum_reads_lengths = [len(read.seq) for read in bf.fetch()]
+    sum_reads_lengths = sum(sum_reads_lengths)
 
-        if bam_bai == 'y':
-            pysam.index(bf)
-            print '\nIndex file was successfully produced as: %s.bai\n'\
-                    % bf
-            exit()
+    # Define average read length
+    av_read_length = sum_reads_lengths / float(map_reads)
 
-        elif bam_bai == 'n':
-            print '\nThis program can\'t be run without a BAM index file.\n'
+    # Calculate average coverage for the reference genome,
+    # using the average read length.
+    av_coverage = (av_read_length * map_reads) / float(ref_size)
 
-        else:
-            print '\nSomething wen\'t wrong...\n'
+    # Write extracted information from the BAM file to txt file
+    with open('results/' + args.bam + '.txt', 'w') as save_bam:
 
-    else:
-
-        # Calculate the total length of the reference sequence.
-        # Achieved by summing up the lengths of individual references.
-        ref_size = [length for length in samfile.lengths]
-        ref_size = sum(ref_size)
-
-        # Fetch amount of reads that are available.
-        tot_reads = samfile.count()
-        map_reads = samfile.mapped
-        unmap_reads = samfile.unmapped
-
-        # Calculate the sum of the reads lengths
-        sum_reads_lengths = [len(read.seq) for read in samfile.fetch()]
-        sum_reads_lengths = sum(sum_reads_lengths)
-
-        # Define average read length
-        av_read_length = sum_reads_lengths / float(map_reads)
-
-        # Calculate average coverage for the reference genome,
-        # using the average read length.
-        av_coverage = (av_read_length * map_reads) / float(ref_size)
-
-        # Write extracted information from the BAM file to txt file
-        with open('results/' + bf + '.txt', 'w') as save_bam:
-
-            save_bam.write('Reference size: %d\r\n' % ref_size)
-            save_bam.write('Total number of reads: %d\r\n' % tot_reads)
-            save_bam.write('Mapped reads: %d\r\n' % map_reads)
-            save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
-            save_bam.write('Average read length: %.2f\r\n' % av_read_length)
-            save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
-
-    samfile.close()
+        save_bam.write('Reference size: %d\r\n' % ref_size)
+        save_bam.write('Total number of reads: %d\r\n' % tot_reads)
+        save_bam.write('Mapped reads: %d\r\n' % map_reads)
+        save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
+        save_bam.write('Average read length: %.2f\r\n' % av_read_length)
+        save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
 
 def bam_cov_ref(bf):
 
@@ -128,11 +99,9 @@ def bam_cov_ref(bf):
     We will be using the average read length for each reference
     '''
 
-    samfile = pysam.AlignmentFile(bf, 'rb')
-
     # Create lists to hold reference names and lengths
-    refs = samfile.references
-    refs_lengths = samfile.lengths
+    refs = bf.references
+    refs_lengths = bf.lengths
 
     # Initialize list which will contain coverage for each reference
     refs_coverage = []
@@ -142,11 +111,11 @@ def bam_cov_ref(bf):
 
         # Define sum of read length for reference, so that we can calculate
         # average read length. This is done using pysams fetch()
-        sum_read_length = [len(read.seq) for read in samfile.fetch(refs[i])]
+        sum_read_length = [len(read.seq) for read in bf.fetch(refs[i])]
         sum_read_length = sum(sum_read_length)
 
         # Create list to hold total reads for reference
-        tot_reads = samfile.count(refs[i])
+        tot_reads = bf.count(refs[i])
         av_read_length = sum_read_length / tot_reads
 
         # Define the length of current reference
@@ -169,10 +138,8 @@ def bam_cov_ref(bf):
     plt.xticks(refs_range, refs, rotation='vertical')
     plt.grid()
 
-    plt.savefig('results/graphs/' + bf + '_cov_ref.pdf', bbox_inches='tight')
+    plt.savefig('results/graphs/' + args.bcr + '_cov_ref.pdf', bbox_inches='tight')
     plt.close()
-
-    samfile.close()
 
 def bam_cov_pos(bf):
 
@@ -180,17 +147,15 @@ def bam_cov_pos(bf):
     Produce 'coverage per position' graph for each individual reference
     '''
 
-    samfile = pysam.AlignmentFile(bf, 'rb')
-
     # Create lists to hold reference names and lengths
-    refs = samfile.references
+    refs = bf.references
 
     # Loop through individual references
     for ref in refs:
 
         # Use pysam pileup to get coverage for each position in reference
-        ref_pos = [p.pos for p in samfile.pileup(ref)]
-        ref_pos_coverage = [p.n for p in samfile.pileup(ref)]
+        ref_pos = [p.pos for p in bf.pileup(ref)]
+        ref_pos_coverage = [p.n for p in bf.pileup(ref)]
 
         # Plot graph using matplotlib
         plt.figure()
@@ -201,8 +166,43 @@ def bam_cov_pos(bf):
         plt.xlabel('Position (bp)')
         plt.grid()
 
-        plt.savefig('results/graphs/' + bf + ref + '_cov.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + args.bcp + ref + '_cov.pdf', bbox_inches='tight')
         plt.close()
+
+def fetch_bam(bf):
+
+    '''
+    BAM filename is received through the bf argument and is then
+    checked for Index file. With the Index file, samfile is created
+    and passed on as an argument to the respective funtion.
+    '''
+    
+    # Open BAM file using pysam
+    samfile = pysam.AlignmentFile(bf, 'rb')
+
+    # Check if BAM file has an index file. If False, give option
+    # to create index file.
+    if samfile.has_index() == False:
+        print '\nNo BAM index file could be found for %s' % (bf)
+
+        bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
+
+        if bam_bai == 'y':
+            pysam.index(bf)
+            exit()
+
+        elif bam_bai == 'n':
+            print '\nThis program can\'t be run without a BAM index file.\n'
+
+        else:
+            print '\nSomething wen\'t wrong...\n'
+
+    elif args.bam:
+        bam_view(samfile)
+    elif args.bcr:
+        bam_cov_ref(samfile)
+    elif args.bcp:
+        bam_cov_pos(samfile)
 
     samfile.close()
 
@@ -218,15 +218,15 @@ def main():
     if args.fasta:
         fetch_fasta(args.fasta)
 
-    # Check if argument 'args.bam' is present and open it op for reading.
+    # Check which of the bam arguments is present and call open_bam on it.
     if args.bam:
         fetch_bam(args.bam)
 
-    if args.bcf:
-        bam_cov_ref(args.bcf)
+    if args.bcr:
+        fetch_bam(args.bcr)
 
     if args.bcp:
-        bam_cov_pos(args.bcp)
+        fetch_bam(args.bcp)
 
     # Future capability to be added
     if args.fasta and args.bam:
