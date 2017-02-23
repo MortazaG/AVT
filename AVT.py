@@ -3,6 +3,17 @@
 # Licence:
 
 # Usage:
+# For BAM tasks, pysam looks for a BAM index file in the same folder.
+# If index file is absent, the program will offer to produce one for you.
+# The new filename will end with ''.bam.bai'.
+#
+# Certain BAM tasks require the file to be sorted by coordinate. If it is not,
+# the program will offer to produce a sorted version of the file for you.
+# The new filename will start with 'sorted_'. Alternatively, if the file is
+# sorted even though the @HD, SO tag is missing or set to 'unsorted', you can
+# manually add 'sorted_'to your filename and the script will recognize it
+# as sorted.
+#
 
 import sys
 import pysam
@@ -185,16 +196,14 @@ def sort_bam(filename):
 
     '''
     Takes as argument the filename. Inform the user that BAM file
-    needs to be sorted and ask if they wan't the program to sort it
+    needs to be sorted and asks if they wan't the program to sort it
     for them. Exit when done.
     '''
 
-    choice = raw_input(
-            'Sort BAM file by coordinate now? [y/n]: '
-            ).lower()
+    choice = raw_input('Sort BAM file by coordinate now? [y/n]: ').lower()
 
     if choice == 'y':
-        pysam.sort(filename, '-o', filename + '_sorted.bam')
+        pysam.sort(filename, '-o', 'sorted_' + filename)
         exit()
     else:
         print '[Error] Exiting, BAM file is not sorted accordingly'
@@ -203,9 +212,9 @@ def sort_bam(filename):
 def check_bam_sorted(filename, bf):
 
     '''
-    Takes as arguments filename and samfile. Check if file is sorted by
+    Takes as arguments filename and samfile. Checks if file is sorted by
     looking for the @HD subtag SO, alternatively by checking if 'sorted'
-    is in the filename. Call on sort_bam if none of these are found.
+    is in the filename. Call on sort_bam(filename) if none of these are found.
     '''
 
     # Store the header for samfile
@@ -265,6 +274,7 @@ def open_bam(bf):
         bam_view(samfile)
 
     if args.bcr:
+        check_bam_sorted(args.bcr, samfile)
         bam_cov_ref(samfile)
 
     if args.bcp:
