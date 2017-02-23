@@ -181,7 +181,8 @@ def bam_cov_pos(sf):
     for ref in refs:
 
         # Use pysam pileup to get coverage for each position in reference
-        ref_pos = [p.pos for p in sf.pileup(ref)]
+        # pileup() uses 0-based indexing, thus we have to add 1 for each pos
+        ref_pos = [p.pos+1 for p in sf.pileup(ref)]
         ref_pos_coverage = [p.n for p in sf.pileup(ref)]
 
         # Plot graph using matplotlib
