@@ -181,7 +181,57 @@ def bam_cov_pos(bf):
         plt.savefig('results/graphs/' + args.bcp + ref + '_cov_pos.pdf', bbox_inches='tight')
         plt.close()
 
-def fetch_bam(bf):
+def sort_bam(filename):
+
+    '''
+    Takes as argument the filename. Inform the user that BAM file
+    needs to be sorted and ask if they wan't the program to sort it
+    for them. Exit when done.
+    '''
+
+    choice = raw_input(
+            'Sort BAM file by coordinate now? [y/n]: '
+            ).lower()
+
+    if choice == 'y':
+        pysam.sort(filename, '-o', filename + '_sorted.bam')
+        exit()
+    else:
+        print '[Error] Exiting, BAM file is not sorted accordingly'
+        exit()
+
+def check_bam_sorted(filename, bf):
+
+    '''
+    Takes as arguments filename and samfile. Check if file is sorted by
+    looking for the @HD subtag SO, alternatively by checking if 'sorted'
+    is in the filename. Call on sort_bam if none of these are found.
+    '''
+
+    # Store the header for samfile
+    header = bf.header
+
+    try:
+        # Check for the existence of @HD, SO tag. Raise exception if absent.
+        if not header['HD']['SO']:
+            raise Exception
+
+    except Exception:
+        print '[Error] Missing tag: @HD, SO'
+        sort_bam(filename)
+
+    else:
+
+        # Check if @HD, SO is set to coordinate and if 'sorted' can be found
+        # in the filename, call on sort_bam otherwise.
+        if header['HD']['SO'] != 'coordinate':
+
+            if 'sorted' not in filename:
+                print '[Error] BAM file is not sorted by coordinate'
+                sort_bam(filename)
+
+
+def open_bam(bf):
 
     '''
     BAM filename is received through the bf argument and is then
@@ -203,7 +253,7 @@ def fetch_bam(bf):
             pysam.index(bf)
 
         elif bam_bai == 'n':
-            print '\nThis program can\'t be run without a BAM index file.\n'
+            print '\n[Error] Can\'t run program without BAM index file.\n'
 
         else:
             print '\nSomething wen\'t wrong...\n'
@@ -226,7 +276,7 @@ def main():
 
     '''
     Main function reads in FASTA and BAM files by calling fetch_fasta()
-    and fetch_bam() functions with the user input as argument.
+    and open_bam() functions with the user input as argument.
     '''
 
     # Check if args.fasta is present and then call fetch_fasta with
@@ -234,15 +284,15 @@ def main():
     if args.fasta:
         fetch_fasta(args.fasta)
 
-    # Check which of the bam arguments is present and call fetch_bam on it.
+    # Check which of the bam arguments is present and call open_bam on it.
     if args.bam:
-        fetch_bam(args.bam)
+        open_bam(args.bam)
 
     if args.bcr:
-        fetch_bam(args.bcr)
+        open_bam(args.bcr)
 
     if args.bcp:
-        fetch_bam(args.bcp)
+        open_bam(args.bcp)
 
     # Future capability to be added
     if args.fasta and args.bam:
