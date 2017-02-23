@@ -67,28 +67,28 @@ def fetch_fasta(ff):
             save_fasta.write('ID: %s\r\n' % fasta_record.id)
             save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
 
-def bam_view(bf):
+def bam_view(sf):
 
     '''
     Write necessary information from a BAM file to txt file.
-    BAM filehandle is received through the bf argument.
+    BAM filehandle is received through the sf argument.
 
-    Receives pysams samfile as argument through bf.
+    Receives pysams samfile as argument through sf.
     Outputs information to txt file in results/ folder.
     '''
 
     # Calculate the total length of the reference sequence.
     # Achieved by summing up the lengths of individual references.
-    ref_size = [length for length in bf.lengths]
+    ref_size = [length for length in sf.lengths]
     ref_size = sum(ref_size)
 
     # Fetch amount of reads that are available.
-    tot_reads = bf.count()
-    map_reads = bf.mapped
-    unmap_reads = bf.unmapped
+    tot_reads = sf.count()
+    map_reads = sf.mapped
+    unmap_reads = sf.unmapped
 
     # Calculate the sum of the reads lengths
-    sum_reads_lengths = [len(read.seq) for read in bf.fetch()]
+    sum_reads_lengths = [len(read.seq) for read in sf.fetch()]
     sum_reads_lengths = sum(sum_reads_lengths)
 
     # Define average read length
@@ -108,20 +108,22 @@ def bam_view(bf):
         save_bam.write('Average read length: %.2f\r\n' % av_read_length)
         save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
 
-def bam_cov_ref(bf):
+    sf.close()
+
+def bam_cov_ref(sf):
 
     '''
     Produce 'coverage per reference' graph, following:
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
 
-    Receives pysams samfile as argument through bf.
-    Outputs graphs as pdf files in results/graphs/ folder.
+    Receives pysams samfile as argument through sf.
+    Outputs graphs as pdf fsfiles in results/graphs/ folder.
     '''
 
     # Create lists to hold reference names and lengths
-    refs = bf.references
-    refs_lengths = bf.lengths
+    refs = sf.references
+    refs_lengths = sf.lengths
 
     # Initialize list which will contain coverage for each reference
     refs_coverage = []
@@ -131,11 +133,11 @@ def bam_cov_ref(bf):
 
         # Define sum of read length for reference, so that we can calculate
         # average read length. This is done using pysams fetch()
-        sum_read_length = [len(read.seq) for read in bf.fetch(refs[i])]
+        sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
         sum_read_length = sum(sum_read_length)
 
         # Create list to hold total reads for reference
-        tot_reads = bf.count(refs[i])
+        tot_reads = sf.count(refs[i])
         av_read_length = sum_read_length / tot_reads
 
         # Define the length of current reference
@@ -161,24 +163,26 @@ def bam_cov_ref(bf):
     plt.savefig('results/graphs/' + args.bcr + '_cov_ref.pdf', bbox_inches='tight')
     plt.close()
 
-def bam_cov_pos(bf):
+    sf.close()
+
+def bam_cov_pos(sf):
 
     '''
     Produce 'coverage per position' graph for each individual reference
 
-    Receive pysams samfile as argument through bf.
+    Receive pysams samfile as argument through sf.
     Outputs graph as a pdf file in results/graphs/ folder.
     '''
 
     # Create lists to hold reference names and lengths
-    refs = bf.references
+    refs = sf.references
 
     # Loop through individual references
     for ref in refs:
 
         # Use pysam pileup to get coverage for each position in reference
-        ref_pos = [p.pos for p in bf.pileup(ref)]
-        ref_pos_coverage = [p.n for p in bf.pileup(ref)]
+        ref_pos = [p.pos for p in sf.pileup(ref)]
+        ref_pos_coverage = [p.n for p in sf.pileup(ref)]
 
         # Plot graph using matplotlib
         plt.figure()
@@ -191,6 +195,8 @@ def bam_cov_pos(bf):
 
         plt.savefig('results/graphs/' + args.bcp + ref + '_cov_pos.pdf', bbox_inches='tight')
         plt.close()
+
+    sf.close()
 
 def sort_bam(filename):
 
@@ -209,7 +215,7 @@ def sort_bam(filename):
         print '[Error] Exiting, BAM file is not sorted accordingly'
         exit()
 
-def check_bam_sorted(filename, bf):
+def check_bam_sorted(filename, sf):
 
     '''
     Takes as arguments filename and samfile. Checks if file is sorted by
@@ -218,7 +224,7 @@ def check_bam_sorted(filename, bf):
     '''
 
     # Store the header for samfile
-    header = bf.header
+    header = sf.header
 
     try:
         # Check for the existence of @HD, SO tag. Raise exception if absent.
@@ -238,7 +244,6 @@ def check_bam_sorted(filename, bf):
             if 'sorted' not in filename:
                 print '[Error] BAM file is not sorted by coordinate'
                 sort_bam(filename)
-
 
 def open_bam(bf):
 
@@ -269,18 +274,7 @@ def open_bam(bf):
 
         exit()
 
-    # Call the respective function with samfile as argument.
-    if args.bam:
-        bam_view(samfile)
-
-    if args.bcr:
-        check_bam_sorted(args.bcr, samfile)
-        bam_cov_ref(samfile)
-
-    if args.bcp:
-        bam_cov_pos(samfile)
-
-    samfile.close()
+    return samfile
 
 def main():
 
@@ -294,15 +288,16 @@ def main():
     if args.fasta:
         fetch_fasta(args.fasta)
 
-    # Check which of the bam arguments is present and call open_bam on it.
+    # Check which of the bam arguments is present and call the respective
+    # function with open_bam() as argument.
     if args.bam:
-        open_bam(args.bam)
+        bam_view(open_bam(args.bam))
 
     if args.bcr:
-        open_bam(args.bcr)
+        bam_cov_ref(open_bam(args.bcr))
 
     if args.bcp:
-        open_bam(args.bcp)
+        bam_cov_pos(open_bam(args.bcp))
 
     # Future capability to be added
     if args.fasta and args.bam:
