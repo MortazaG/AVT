@@ -202,6 +202,7 @@ def bam_cov_pos(sf):
         plt.title('Coverage across reference ' + ref + '\n')
         plt.ylabel('Mean Coverage')
         plt.xlabel('Position (bp)')
+        plt.xticks(ref_pos, [])
         plt.grid()
 
         plt.savefig('results/graphs/' + args.bcp + ref + '_cov_pos.pdf', bbox_inches='tight')
@@ -209,6 +210,7 @@ def bam_cov_pos(sf):
 
     sf.close()
 
+def gc_ref(ff, sf):
 
     '''
     Receive fasta and samfile as argument and plot gc per refernce graph.
@@ -348,6 +350,7 @@ def main():
     # Check if args.gcr is present and call on gc_refs to produce necessary
     # graphs. Two arguments are received, first the fasta- and then bam-filename.
     if args.gcr:
+        gc_ref(args.gcr[0], open_bam(args.gcr[1]))
 
 # Makes sure main() is only run when this script is called from
 # from itself.
