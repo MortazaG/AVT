@@ -42,6 +42,9 @@ parser.add_argument("-f", "--fasta", help="FASTA - Overview")
 parser.add_argument("-b", "--bam", help="BAM - Overview")
 parser.add_argument("-bcr", help="BAM Graph - Coverage per reference ")
 parser.add_argument("-bcp", help="BAM Graph - Coverage per position")
+parser.add_argument("-gcr", nargs=2, help="GC per reference graph. \
+                                        1st argument FASTA filename,\
+                                        2nd argument BAM filename")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -98,7 +101,7 @@ def bam_view(sf):
     # using the average read length.
     av_coverage = (av_read_length * map_reads) / float(ref_size)
 
-    # Initiate lists containing reference names and lengths
+    # Create lists containing reference names and lengths
     refs = sf.references
     refs_lengths = sf.lengths
 
@@ -207,6 +210,40 @@ def bam_cov_pos(sf):
     sf.close()
 
 
+    '''
+    Receive fasta and samfile as argument and plot gc per refernce graph.
+    Outputs graph as a pdf file in results/graphs/ folder.
+    '''
+
+    # Create lists to hold reference names and lengths
+    refs = sf.references
+    refs_lengths = sf.lengths
+
+    # Initialize list which will contain gc for each reference
+    refs_gc = []
+
+    # Loop through references and calculate GC using SeqUtils
+    for ref in SeqIO.parse(ff, 'fasta'):
+        refs_gc.append(SeqUtils.GC(ref.seq))
+
+    # Produce numerical values for x axis
+    refs_range = [r+1 for r in range(len(refs))]
+
+    # Plot graph using matplotlib.pyplot
+    plt.figure()
+    plt.plot(refs_range, refs_gc)
+
+    plt.title('GC per reference\n')
+    plt.ylabel('GC')
+    plt.xlabel('Reference')
+    plt.xticks(refs_range, refs, rotation='vertical')
+    plt.grid()
+
+    plt.savefig('results/graphs/' + ff + '_gc_refs.pdf', bbox_inches='tight')
+    plt.close()
+
+    sf.close()
+
 def sort_bam(filename):
 
     '''
@@ -308,9 +345,9 @@ def main():
     if args.bcp:
         bam_cov_pos(open_bam(args.bcp))
 
-    # Future capability to be added
-    if args.fasta and args.bam:
-        print 'Sorry, can\'t do that yet...'
+    # Check if args.gcr is present and call on gc_refs to produce necessary
+    # graphs. Two arguments are received, first the fasta- and then bam-filename.
+    if args.gcr:
 
 # Makes sure main() is only run when this script is called from
 # from itself.
