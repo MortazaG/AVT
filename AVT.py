@@ -56,7 +56,7 @@ def fetch_fasta(ff):
     Outputs information to txt file in results/
     '''
 
-    # Open FASTA file
+    # Open txt file to write results in
     with open('results/' + ff + '.txt', 'w') as save_fasta:
 
         # Use SeqIO from BipPython to parse fasta file.
@@ -98,6 +98,10 @@ def bam_view(sf):
     # using the average read length.
     av_coverage = (av_read_length * map_reads) / float(ref_size)
 
+    # Initiate lists containing reference names and lengths
+    refs = sf.references
+    refs_lengths = sf.lengths
+
     # Write extracted information from the BAM file to txt file
     with open('results/' + args.bam + '.txt', 'w') as save_bam:
 
@@ -106,7 +110,10 @@ def bam_view(sf):
         save_bam.write('Mapped reads: %d\r\n' % map_reads)
         save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
         save_bam.write('Average read length: %.2f\r\n' % av_read_length)
-        save_bam.write('Average coverage: %.4f\r\n' % av_coverage)
+        save_bam.write('Average coverage: %.4f\r\n\r\n' % av_coverage)
+
+        for ref, length in zip(refs, refs_lengths):
+            save_bam.write('Reference: %s; Length (bp): %s\r\n' % (ref, length))
 
     sf.close()
 
@@ -198,6 +205,7 @@ def bam_cov_pos(sf):
         plt.close()
 
     sf.close()
+
 
 def sort_bam(filename):
 
