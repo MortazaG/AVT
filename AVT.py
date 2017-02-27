@@ -86,9 +86,9 @@ def bam_view(sf):
     ref_size = sum(ref_size)
 
     # Fetch amount of reads that are available.
-    tot_reads = sf.count()
     map_reads = sf.mapped
     unmap_reads = sf.unmapped
+    tot_reads = map_reads + unmap_reads
 
     # Calculate the sum of the reads lengths
     sum_reads_lengths = [len(read.seq) for read in sf.fetch()]
@@ -110,8 +110,10 @@ def bam_view(sf):
 
         save_bam.write('Reference size: %d\r\n' % ref_size)
         save_bam.write('Total number of reads: %d\r\n' % tot_reads)
-        save_bam.write('Mapped reads: %d\r\n' % map_reads)
-        save_bam.write('Unmapped reads: %d\r\n' % unmap_reads)
+        save_bam.write('Mapped reads: %d (%.2f%%)\r\n' % (map_reads,\
+                                            (map_reads/float(tot_reads))*100))
+        save_bam.write('Unmapped reads: %d (%.2f%%)\r\n' % (unmap_reads,\
+                                            (unmap_reads/float(tot_reads))*100))
         save_bam.write('Average read length: %.2f\r\n' % av_read_length)
         save_bam.write('Average coverage: %.4f\r\n\r\n' % av_coverage)
 
