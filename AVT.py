@@ -14,7 +14,10 @@
 # manually add 'sorted_'to your filename and the script will recognize it
 # as sorted.
 #
-
+# -gcr (gc_ref()) requires a sorted BAM file, if file is not sorted, you will
+# get the option to do so. If you choose to sort it, the new filename will start
+# with sorted_. This new filename must be called upon next time you run -gcr.
+#
 import sys
 import pysam
 import matplotlib.pyplot as plt
@@ -243,7 +246,7 @@ def gc_ref(ff, sf):
     plt.xticks(refs_range, refs, rotation='vertical')
     plt.grid()
 
-    plt.savefig('results/graphs/' + ff + '_gc_refs.pdf', bbox_inches='tight')
+    plt.savefig('results/graphs/' + ff + '_gc_ref.pdf', bbox_inches='tight')
     plt.close()
 
     sf.close()
@@ -350,8 +353,13 @@ def main():
         bam_cov_pos(open_bam(args.bcp))
 
     # Check if args.gcr is present and call on gc_refs to produce necessary
-    # graphs. Two arguments are received, first the fasta- and then bam-filename.
+    # graphs.
     if args.gcr:
+
+        # Check first if Bam file is sorted.
+        check_bam_sorted(args.gcr[1], open_bam(args.gcr[1]))
+
+        # Two arguments are needed, first the fasta- and then bam-filename.
         gc_ref(args.gcr[0], open_bam(args.gcr[1]))
 
 # Makes sure main() is only run when this script is called from
