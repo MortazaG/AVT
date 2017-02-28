@@ -78,7 +78,7 @@ def bam_stats(filename, sf):
     Write necessary information from a BAM file to txt file.
     BAM filehandle is received through the sf argument.
 
-    Receives pysams samfile as argument through sf.
+    Receives filename and open_bam()'s' samfile as argument.
     Outputs information to txt file in results/ folder.
     '''
 
@@ -124,14 +124,14 @@ def bam_stats(filename, sf):
 
     sf.close()
 
-def bam_cov_ref(sf):
+def bam_cov_ref(filename, sf):
 
     '''
     Produce 'coverage per reference' graph, following:
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
 
-    Receives pysams samfile as argument through sf.
+    Receives filename and open_bam()'s' samfile as argument.
     Outputs graphs as pdf fsfiles in results/graphs/ folder.
     '''
 
@@ -174,17 +174,17 @@ def bam_cov_ref(sf):
     plt.xticks(refs_range, refs, rotation='vertical')
     plt.grid()
 
-    plt.savefig('results/graphs/' + args.bcr + '_cov_ref.pdf', bbox_inches='tight')
+    plt.savefig('results/graphs/' + filename + '_cov_ref.pdf', bbox_inches='tight')
     plt.close()
 
     sf.close()
 
-def bam_cov_pos(sf):
+def bam_cov_pos(filename, sf):
 
     '''
     Produce 'coverage per position' graph for each individual reference
 
-    Receive pysams samfile as argument through sf.
+    Receives filename and open_bam()'s' samfile as argument.
     Outputs graph as a pdf file in results/graphs/ folder.
     '''
 
@@ -209,7 +209,7 @@ def bam_cov_pos(sf):
         plt.xticks(ref_pos, [])
         plt.grid()
 
-        plt.savefig('results/graphs/' + args.bcp + ref + '_cov_pos.pdf', bbox_inches='tight')
+        plt.savefig('results/graphs/' + filename + ref + '_cov_pos.pdf', bbox_inches='tight')
         plt.close()
 
     sf.close()
@@ -374,13 +374,13 @@ def main():
         if args.bam:
             bam_stats(filename['bam'], open_bam(filename['bam']))
 
-        # If True, call upon bam_cov_ref(), with samfile as argument.
+        # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcr:
-            bam_cov_ref(open_bam(filename['bam']))
+            bam_cov_ref(filename['bam'], open_bam(filename['bam']))
 
-        # If True, call upon bam_cov_ref(), with samfile as argument.
+        # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
-            bam_cov_pos(open_bam(filename['bam']))
+            bam_cov_pos(filename['bam'], open_bam(filename['bam']))
 
         # Check if args.gcr is present and call on gc_refs to produce necessary
         # graphs.
