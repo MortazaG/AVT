@@ -330,6 +330,30 @@ def open_bam(bf):
 
     return samfile
 
+def check_infile(infile):
+
+    '''
+    Check infile list for number of arguments and filetypes.
+    Receives a list as argument, returns bamfile and/or fastafile.
+    '''
+
+    # More than two arguments returns an Error and exits the program
+    if len(infile) > 2:
+        print '[Error] Too many arguments.'
+        exit()
+
+    # Loop through infile list by index nr and check if it's a bam file.
+    # All other files are considered to be fasta files.
+    for i in range(len(infile)):
+
+        if '.bam' in infile[i]:
+            bamfile = infile[i]
+            return bamfile
+
+        else:
+            fastafile = infile[i]
+            return fastafile
+
 def main():
 
     '''
