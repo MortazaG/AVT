@@ -51,7 +51,7 @@ parser.add_argument("--gcr", action='store_true', help="GC per reference graph."
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
 
-def fetch_fasta(ff):
+def fasta_stats(ff):
 
     '''
     Fetch and print necessary information from a FASTA file.
@@ -72,7 +72,7 @@ def fetch_fasta(ff):
             save_fasta.write('ID: %s\r\n' % fasta_record.id)
             save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
 
-def bam_view(filename, sf):
+def bam_stats(filename, sf):
 
     '''
     Write necessary information from a BAM file to txt file.
@@ -331,7 +331,8 @@ def check_infile(infile):
 
     '''
     Check infile list for number of arguments and filetypes.
-    Receives a list as argument, returns bamfile and/or fastafile.
+    Receives a list as argument, returns dictionary containing filetype
+    as key and filename as value.
     '''
 
     # More than two arguments returns an Error and exits the program
@@ -354,22 +355,30 @@ def check_infile(infile):
 def main():
 
     '''
-    Main function reads in FASTA and BAM files by calling fetch_fasta()
-    and open_bam() functions with the user input as argument.
+    Main function checks positional argument for filename(s) and which of the
+    optional arguments are called upon from the user. Output is the result from
+    the respective positional argument.
     '''
 
     if args.infile:
+
+        # Create dictionary holding the available filenames.
+        # Dictionary key is  filetype and value is filename.
         filename = check_infile(args.infile)
 
+        # If True, call upon fasta_stats() with fasta filename as argument.
         if args.fasta:
-            fetch_fasta(filename['fasta'])
+            fasta_stats(filename['fasta'])
 
+        # If True, call upon bam_stats(), with filename and samfile as argument.
         if args.bam:
-            bam_view(filename['bam'], open_bam(filename['bam']))
+            bam_stats(filename['bam'], open_bam(filename['bam']))
 
+        # If True, call upon bam_cov_ref(), with samfile as argument.
         if args.bcr:
             bam_cov_ref(open_bam(filename['bam']))
 
+        # If True, call upon bam_cov_ref(), with samfile as argument.
         if args.bcp:
             bam_cov_pos(open_bam(filename['bam']))
 
