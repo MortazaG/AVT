@@ -148,12 +148,12 @@ def bam_cov_ref(sf):
 
         # Define sum of read length for reference, so that we can calculate
         # average read length. This is done using pysams fetch()
-        sum_read_length = [len(read.seq) for read in sf.fetch(refs[i])]
-        sum_read_length = sum(sum_read_length)
+        read_lengths = [len(read.seq) for read in sf.fetch(refs[i])]
+        sum_read_lengths = sum(read_lengths)
 
         # Create list to hold total reads for reference
         tot_reads = sf.count(refs[i])
-        av_read_length = sum_read_length / tot_reads
+        av_read_length = sum_read_lengths / tot_reads
 
         # Define the length of current reference
         ref_length = refs_lengths[i]
@@ -224,7 +224,6 @@ def gc_ref(ff, sf):
 
     # Create lists to hold reference names and lengths
     refs = sf.references
-    refs_lengths = sf.lengths
 
     # Initialize list which will contain gc for each reference
     refs_gc = []
@@ -356,11 +355,14 @@ def main():
     # graphs.
     if args.gcr:
 
+        # Check for index file
+        bam_opened = open_bam(args.gcr[1])
+
         # Check first if Bam file is sorted.
-        check_bam_sorted(args.gcr[1], open_bam(args.gcr[1]))
+        check_bam_sorted(args.gcr[1], bam_opened)
 
         # Two arguments are needed, first the fasta- and then bam-filename.
-        gc_ref(args.gcr[0], open_bam(args.gcr[1]))
+        gc_ref(args.gcr[0], bam_opened)
 
 # Makes sure main() is only run when this script is called from
 # from itself.
