@@ -42,14 +42,11 @@ except ImportError:
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
 parser.add_argument('infile', nargs='+', help='Fasta and/or BAM filename')
-
-parser.add_argument("-f", "--fasta", help="FASTA - Overview")
-parser.add_argument("-b", "--bam", help="BAM - Overview")
-parser.add_argument("-bcr", help="BAM Graph - Coverage per reference ")
-parser.add_argument("-bcp", help="BAM Graph - Coverage per position")
-parser.add_argument("-gcr", nargs=2, help="GC per reference graph. \
-                                        1st argument FASTA filename,\
-                                        2nd argument BAM filename")
+parser.add_argument("-f", "--fasta", action='store_true', help="FASTA - Overview")
+parser.add_argument("-b", "--bam", action='store_true', help="BAM - Overview")
+parser.add_argument("--bcr", action='store_true', help="BAM Graph - Coverage per reference ")
+parser.add_argument("--bcp", action='store_true', help="BAM Graph - Coverage per position")
+parser.add_argument("--gcr", action='store_true', help="GC per reference graph.")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -75,7 +72,7 @@ def fetch_fasta(ff):
             save_fasta.write('ID: %s\r\n' % fasta_record.id)
             save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
 
-def bam_view(sf):
+def bam_view(filename, sf):
 
     '''
     Write necessary information from a BAM file to txt file.
@@ -111,7 +108,7 @@ def bam_view(sf):
     refs_lengths = sf.lengths
 
     # Write extracted information from the BAM file to txt file
-    with open('results/' + args.bam + '.txt', 'w') as save_bam:
+    with open('results/' + filename + '.txt', 'w') as save_bam:
 
         save_bam.write('Reference size: %d\r\n' % ref_size)
         save_bam.write('Total number of reads: %d\r\n' % tot_reads)
@@ -342,17 +339,17 @@ def check_infile(infile):
         print '[Error] Too many arguments.'
         exit()
 
+    filename = {}
     # Loop through infile list by index nr and check if it's a bam file.
     # All other files are considered to be fasta files.
     for i in range(len(infile)):
 
         if '.bam' in infile[i]:
-            bamfile = infile[i]
-            return bamfile
-
+            filename['bam'] = infile[i]
         else:
-            fastafile = infile[i]
-            return fastafile
+            filename['fasta'] = infile[i]
+
+    return filename
 
 def main():
 
@@ -362,36 +359,32 @@ def main():
     '''
 
     if args.infile:
-        check_infile(args.infile)
+        filename = check_infile(args.infile)
 
-    # Check if args.fasta is present and then call fetch_fasta with
-    # args.fasta as argument.
-    if args.fasta:
-        fetch_fasta(args.fasta)
+        if args.fasta:
+            fetch_fasta(filename['fasta'])
 
-    # Check which of the bam arguments is present and call the respective
-    # function with open_bam() as argument.
-    if args.bam:
-        bam_view(open_bam(args.bam))
+        if args.bam:
+            bam_view(filename['bam'], open_bam(filename['bam']))
 
-    if args.bcr:
-        bam_cov_ref(open_bam(args.bcr))
+        if args.bcr:
+            bam_cov_ref(open_bam(filename['bam']))
 
-    if args.bcp:
-        bam_cov_pos(open_bam(args.bcp))
+        if args.bcp:
+            bam_cov_pos(open_bam(filename['bam']))
 
-    # Check if args.gcr is present and call on gc_refs to produce necessary
-    # graphs.
-    if args.gcr:
+        # Check if args.gcr is present and call on gc_refs to produce necessary
+        # graphs.
+        if args.gcr:
 
-        # Check for index file
-        bam_opened = open_bam(args.gcr[1])
+            # Check for index file
+            bam_opened = open_bam(filename['bam'])
 
-        # Check first if Bam file is sorted.
-        check_bam_sorted(args.gcr[1], bam_opened)
+            # Check first if Bam file is sorted.
+            check_bam_sorted(filename['bam'], bam_opened)
 
-        # Two arguments are needed, first the fasta- and then bam-filename.
-        gc_ref(args.gcr[0], bam_opened)
+            # Two arguments are needed, first the fasta- and then bam-filename.
+            gc_ref(filename['fasta'], bam_opened)
 
 # Makes sure main() is only run when this script is called from
 # from itself.
