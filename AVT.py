@@ -41,6 +41,8 @@ except ImportError:
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
+parser.add_argument('infile', nargs='+', help='Fasta and/or BAM filename')
+
 parser.add_argument("-f", "--fasta", help="FASTA - Overview")
 parser.add_argument("-b", "--bam", help="BAM - Overview")
 parser.add_argument("-bcr", help="BAM Graph - Coverage per reference ")
@@ -334,6 +336,9 @@ def main():
     Main function reads in FASTA and BAM files by calling fetch_fasta()
     and open_bam() functions with the user input as argument.
     '''
+
+    if args.infile:
+        check_infile(args.infile)
 
     # Check if args.fasta is present and then call fetch_fasta with
     # args.fasta as argument.
