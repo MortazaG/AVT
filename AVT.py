@@ -42,6 +42,7 @@ except ImportError:
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
 parser.add_argument('infile', nargs='+', help='Fasta and/or BAM filename')
+parser.add_argument("-f", "--fasta", action='store_true', help="FASTA stats in columns - id, gc%%, length")
 parser.add_argument("-b", "--bam", action='store_true', help="BAM - Overview")
 parser.add_argument("--gcc", action='store_true', help="Graph - plot GC%% against Coverage")
 parser.add_argument("--bcp", action='store_true', help="BAM Graph - Coverage per position")
@@ -220,41 +221,6 @@ def bam_cov_pos(filename, sf):
 
     sf.close()
 
-def gc_ref(ff, sf):
-
-    '''
-    Receive fasta and samfile as argument and plot gc per refernce graph.
-    Outputs graph as a pdf file in results/graphs/ folder.
-    '''
-
-    # Create lists to hold reference names and lengths
-    refs = sf.references
-
-    # Initialize list which will contain gc for each reference
-    refs_gc = []
-
-    # Loop through references and calculate GC using SeqUtils
-    for ref in SeqIO.parse(ff, 'fasta'):
-        refs_gc.append(SeqUtils.GC(ref.seq))
-
-    # Produce numerical values for x axis
-    refs_range = [r+1 for r in range(len(refs))]
-
-    # Plot graph using matplotlib.pyplot
-    plt.figure()
-    plt.plot(refs_range, refs_gc)
-
-    plt.title('GC per reference\n')
-    plt.ylabel('GC')
-    plt.xlabel('Reference')
-    plt.xticks(refs_range, refs, rotation='vertical')
-    plt.grid()
-
-    plt.savefig('results/graphs/' + ff + '_gc_ref.pdf', bbox_inches='tight')
-    plt.close()
-
-    sf.close()
-
 def sort_bam(filename):
 
     '''
@@ -388,18 +354,6 @@ def main():
         if args.bcp:
             bam_cov_pos(filename['bam'], open_bam(filename['bam']))
 
-        # Check if args.gcr is present and call on gc_refs to produce necessary
-        # graphs.
-        if args.gcr:
-
-            # Check for index file
-            bam_opened = open_bam(filename['bam'])
-
-            # Check first if Bam file is sorted.
-            check_bam_sorted(filename['bam'], bam_opened)
-
-            # Two arguments are needed, first the fasta- and then bam-filename.
-            gc_ref(filename['fasta'], bam_opened)
 
 # Makes sure main() is only run when this script is called from
 # from itself.
