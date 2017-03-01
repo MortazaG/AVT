@@ -42,9 +42,8 @@ except ImportError:
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
 parser.add_argument('infile', nargs='+', help='Fasta and/or BAM filename')
-parser.add_argument("-f", "--fasta", action='store_true', help="FASTA - Overview")
 parser.add_argument("-b", "--bam", action='store_true', help="BAM - Overview")
-parser.add_argument("--bcr", action='store_true', help="BAM Graph - Coverage per reference ")
+parser.add_argument("--gcc", action='store_true', help="Graph - plot GC%% against Coverage")
 parser.add_argument("--bcp", action='store_true', help="BAM Graph - Coverage per position")
 parser.add_argument("--gcr", action='store_true', help="GC per reference graph.")
 
@@ -124,23 +123,25 @@ def bam_stats(filename, sf):
 
     sf.close()
 
-def bam_cov_ref(filename, sf):
+def bamf_gc_cov(filename, ff, sf):
 
     '''
-    Produce 'coverage per reference' graph, following:
+    Plot GC-content against Coverage.
+
+    Coverage is calculated as follows:
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
 
-    Receives filename and open_bam()'s' samfile as argument.
-    Outputs graphs as pdf fsfiles in results/graphs/ folder.
+    Receives filename, fastafile and open_bam()'s' samfile as argument.
+    Outputs graphs as pdf file in results/graphs/ folder.
     '''
 
     # Create lists to hold reference names and lengths
     refs = sf.references
     refs_lengths = sf.lengths
 
-    # Initialize list which will contain coverage for each reference
-    refs_coverage = []
+    # Initialize empty list which will contain coverage for each reference
+    ref_cov = []
 
     # Loop through references by index nr and calculate coverage
     for i in range(len(refs)):
@@ -159,22 +160,27 @@ def bam_cov_ref(filename, sf):
 
         # Calculate coverage for reference according to given formula
         ref_coverage = (tot_reads * av_read_length) / float(ref_length)
-        refs_coverage.append(ref_coverage)
+        ref_cov.append(ref_coverage)
 
-    # Produce numerical values for x axis
-    refs_range = [r+1 for r in range(len(refs))]
+    # Initialize empty list to contain the id and gc-content of
+    # each reference sequence.
+    id_ = []
+    gc_ref = []
 
-    # Plot graph using matplotlib.pyplot
-    plt.figure('cov_ref')
-    plt.plot(refs_range, refs_coverage)
+    for entry in SeqIO.parse(ff, 'fasta'):
+        id_.append(entry.id)
+        gc_ref.append(SeqUtils.GC(entry.seq))
 
-    plt.title('Coverage per reference\n')
-    plt.ylabel('Mean Coverage')
-    plt.xlabel('Reference')
-    plt.xticks(refs_range, refs, rotation='vertical')
-    plt.grid()
+    # Plot graph using matplotlib.pyplot, with ref_cov as x-axis and
+    # ref_gc as y-axis.
+    plt.figure()
+    plt.scatter(ref_cov, gc_ref, alpha=0.8)
 
-    plt.savefig('results/graphs/' + filename + '_cov_ref.pdf', bbox_inches='tight')
+    plt.title('GC%% vs Coverage\n')
+    plt.ylabel('GC%%')
+    plt.xlabel('Coverage')
+
+    plt.savefig('results/graphs/' + filename + '_gc_cov.pdf', bbox_inches='tight')
     plt.close()
 
     sf.close()
@@ -375,8 +381,8 @@ def main():
             bam_stats(filename['bam'], open_bam(filename['bam']))
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
-        if args.bcr:
-            bam_cov_ref(filename['bam'], open_bam(filename['bam']))
+        if args.gcc:
+            bamf_gc_cov(filename['bam'], filename['fasta'], open_bam(filename['bam']))
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
