@@ -261,6 +261,7 @@ def sort_bam(filename):
 
     if choice == 'y':
         pysam.sort(filename, '-o', 'sorted_' + filename)
+        print 'sorted_' + filename + ' was sucessfully created.'
         exit()
     else:
         print '[Error] Exiting, BAM file is not sorted accordingly'
@@ -376,6 +377,7 @@ def main():
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.gcc:
+            check_bam_sorted(filename['bam'], open_bam(filename['bam']))
             bamf_gc_cov(filename['bam'], filename['fasta'], open_bam(filename['bam']))
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
