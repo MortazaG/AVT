@@ -176,7 +176,8 @@ def bamf_gc_cov(filename, ff, sf):
 
     def onpick(event):
         ind = event.ind
-        print 'Reference: %s    Coverage:%s    GC%%: %s' % (npy.take(refs, ind), npy.take(refs_cov, ind), npy.take(refs_gc, ind))
+        print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
+                (npy.take(refs, ind), npy.take(refs_cov, ind), npy.take(refs_gc, ind), npy.take(refs_lengths, ind))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
