@@ -65,10 +65,10 @@ def fasta_stats(ff):
     # Use SeqIO from BipPython to parse fasta file.
     for record in SeqIO.parse(ff, 'fasta'):
 
-        if args.fasta and args.gc:
+        if args.gc:
             print '%s\t%s' % (record.id, SeqUtils.GC(record.seq))
 
-        elif args.fasta and args.length:
+        elif args.length:
             print '%s\t%s' % (record.id, len(record.seq))
 
         elif args.fasta:
@@ -183,9 +183,9 @@ def bamf_gc_cov(filename, ff, sf):
     plt.ylabel('GC%%')
     plt.xlabel('Coverage')
 
-    plt.savefig('results/graphs/' + filename + '_gc_cov.pdf', bbox_inches='tight')
-    plt.close()
+    plt.show()
 
+    plt.close()
     sf.close()
 
 def bam_cov_pos(filename, sf):
