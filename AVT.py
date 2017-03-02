@@ -142,7 +142,7 @@ def bamf_gc_cov(filename, ff, sf):
     refs_lengths = sf.lengths
 
     # Initialize empty list which will contain coverage for each reference
-    ref_cov = []
+    refs_cov = []
 
     # Loop through references by index nr and calculate coverage
     for i in range(len(refs)):
@@ -160,26 +160,28 @@ def bamf_gc_cov(filename, ff, sf):
         ref_length = refs_lengths[i]
 
         # Calculate coverage for reference according to given formula
-        ref_coverage = (tot_reads * av_read_length) / float(ref_length)
-        ref_cov.append(ref_coverage)
+        ref_cov = (tot_reads * av_read_length) / float(ref_length)
+        refs_cov.append(ref_cov)
 
     # Initialize empty list to contain the id and gc-content of
     # each reference sequence.
     id_ = []
-    gc_ref = []
+    refs_gc = []
 
     for entry in SeqIO.parse(ff, 'fasta'):
         id_.append(entry.id)
-        gc_ref.append(SeqUtils.GC(entry.seq))
+        refs_gc.append(SeqUtils.GC(entry.seq))
 
-    # Plot graph using matplotlib.pyplot, with ref_cov as x-axis and
-    # ref_gc as y-axis.
-    plt.figure()
-    plt.scatter(ref_cov, gc_ref, alpha=0.8)
+    import numpy as npy
 
-    plt.title('GC against Coverage\n')
-    plt.ylabel('GC%')
-    plt.xlabel('Coverage')
+    def onpick(event):
+        ind = event.ind
+        print 'Reference: %s    Coverage:%s    GC%%: %s' % (npy.take(refs, ind), npy.take(refs_cov, ind), npy.take(refs_gc, ind))
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    col = ax.scatter(refs_cov, refs_gc, picker=0.5)
+    fig.canvas.mpl_connect('pick_event', onpick)
 
     plt.show()
 
