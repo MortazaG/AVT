@@ -109,20 +109,18 @@ def bam_stats(filename, sf):
     refs = sf.references
     refs_lengths = sf.lengths
 
-    # Write extracted information from the BAM file to txt file
-    with open('results/' + filename + '.txt', 'w') as save_bam:
+    # Print extracted information from the BAM file to txt file
+    print 'Reference size: %d\r\n' % ref_size,
+    print 'Total number of reads: %d\r\n' % tot_reads,
+    print 'Mapped reads: %d (%.2f%%)\r\n' % (map_reads,\
+                                        (map_reads/float(tot_reads))*100),
+    print 'Unmapped reads: %d (%.2f%%)\r\n' % (unmap_reads,\
+                                        (unmap_reads/float(tot_reads))*100),
+    print 'Average read length: %.2f\r\n' % av_read_length,
+    print 'Average coverage: %.4f\r\n\r\n' % av_coverage,
 
-        save_bam.write('Reference size: %d\r\n' % ref_size)
-        save_bam.write('Total number of reads: %d\r\n' % tot_reads)
-        save_bam.write('Mapped reads: %d (%.2f%%)\r\n' % (map_reads,\
-                                            (map_reads/float(tot_reads))*100))
-        save_bam.write('Unmapped reads: %d (%.2f%%)\r\n' % (unmap_reads,\
-                                            (unmap_reads/float(tot_reads))*100))
-        save_bam.write('Average read length: %.2f\r\n' % av_read_length)
-        save_bam.write('Average coverage: %.4f\r\n\r\n' % av_coverage)
-
-        for ref, length in zip(refs, refs_lengths):
-            save_bam.write('Reference: %s; Length (bp): %s\r\n' % (ref, length))
+    for ref, length in zip(refs, refs_lengths):
+        print 'Reference: %s    Length (bp): %s\r\n' % (ref, length),
 
     sf.close()
 
@@ -179,8 +177,8 @@ def bamf_gc_cov(filename, ff, sf):
     plt.figure()
     plt.scatter(ref_cov, gc_ref, alpha=0.8)
 
-    plt.title('GC%% vs Coverage\n')
-    plt.ylabel('GC%%')
+    plt.title('GC against Coverage\n')
+    plt.ylabel('GC%')
     plt.xlabel('Coverage')
 
     plt.show()
