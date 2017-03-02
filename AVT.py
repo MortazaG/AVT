@@ -41,12 +41,14 @@ except ImportError:
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
-parser.add_argument('infile', nargs='+', help='Fasta and/or BAM filename')
-parser.add_argument("-f", "--fasta", action='store_true', help="FASTA stats in columns - id, gc%%, length")
-parser.add_argument("-b", "--bam", action='store_true', help="BAM - Overview")
-parser.add_argument("--gcc", action='store_true', help="Graph - plot GC%% against Coverage")
-parser.add_argument("--bcp", action='store_true', help="BAM Graph - Coverage per position")
-parser.add_argument("--gcr", action='store_true', help="GC per reference graph.")
+parser.add_argument("infile", nargs="+", help="Fasta and/or BAM file")
+parser.add_argument("-f", "--fasta", action="store_true", help="FASTA stats in columns - id, gc%%, length")
+parser.add_argument("-g", '--gc', action="store_true", help="FASTA ID and GC%% in columns")
+parser.add_argument("-l", "--length", action="store_true", help="FASTA ID and length in columns")
+parser.add_argument("-b", "--bam", action="store_true", help="BAM - Overview")
+parser.add_argument("--gcc", action="store_true", help="Graph - plot GC%% against Coverage.\
+                                                        Requires both FASTA and BAM file.")
+parser.add_argument("--bcp", action="store_true", help="BAM Graph - Coverage per position")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -54,23 +56,23 @@ args = parser.parse_args()
 def fasta_stats(ff):
 
     '''
-    Fetch and print necessary information from a FASTA file.
-    FASTA filehandle is received through the ff argument.
+    Print ID, GC and Length from FASTA file.
 
     Receives FASTA filename through ff argument.
-    Outputs information to txt file in results/
+    Outputs information to stdout.
     '''
 
-    # Open txt file to write results in
-    with open('results/' + ff + '.txt', 'w') as save_fasta:
+    # Use SeqIO from BipPython to parse fasta file.
+    for record in SeqIO.parse(ff, 'fasta'):
 
-        # Use SeqIO from BipPython to parse fasta file.
-        for fasta_record in SeqIO.parse(ff, 'fasta'):
-            gc_content = SeqUtils.GC(fasta_record.seq)
+        if args.fasta and args.gc:
+            print '%s\t%s' % (record.id, SeqUtils.GC(record.seq))
 
-            # Write information from FASTA file to txt file.
-            save_fasta.write('ID: %s\r\n' % fasta_record.id)
-            save_fasta.write('GC content: %.2f%%\r\n' % gc_content)
+        elif args.fasta and args.length:
+            print '%s\t%s' % (record.id, len(record.seq))
+
+        elif args.fasta:
+            print '%s\t%s\t%s' % (record.id, SeqUtils.GC(record.seq), len(record.seq))
 
 def bam_stats(filename, sf):
 
