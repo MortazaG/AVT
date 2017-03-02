@@ -42,9 +42,11 @@ except ImportError:
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
 parser.add_argument("infile", nargs="+", help="Fasta and/or BAM file")
-parser.add_argument("-f", "--fasta", action="store_true", help="FASTA stats in columns - id, gc%%, length")
-parser.add_argument("-g", '--gc', action="store_true", help="FASTA ID and GC%% in columns")
-parser.add_argument("-l", "--length", action="store_true", help="FASTA ID and length in columns")
+parser.add_argument("-f", "--fasta", action="store_true", help="Use in combination with -a, -g, -l, -n flags")
+parser.add_argument("-a", "--all", action="store_true", help="FASTA stats in columns - id, gc%%, length, N-count")
+parser.add_argument("-g", '--gc', action="store_true", help="FASTA id and GC%% in columns")
+parser.add_argument("-l", "--length", action="store_true", help="FASTA id and length in columns")
+parser.add_argument("-n", "--countn", action="store_true", help="FASTA id and N-count in columns")
 parser.add_argument("-b", "--bam", action="store_true", help="BAM - Overview")
 parser.add_argument("--gcc", action="store_true", help="Graph - plot GC%% against Coverage.\
                                                         Requires both FASTA and BAM file.")
@@ -53,10 +55,25 @@ parser.add_argument("--bcp", action="store_true", help="BAM Graph - Coverage per
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
 
+def count_gc(record):
+    return '\t%.2f%%' % SeqUtils.GC(record)
+
+def record_length(record):
+    return '\t%s' % len(record)
+
+def count_n(record):
+
+    seq = record.lower()
+
+    if seq.find('n') == -1:
+        return '\t%d' % 0
+    else:
+        return '\t%d' % seq.find('n')
+
 def fasta_stats(ff):
 
     '''
-    Print ID, GC and Length from FASTA file.
+    Print ID, GC, Length and N-count from FASTA file.
 
     Receives FASTA filename through ff argument.
     Outputs information to stdout.
@@ -65,14 +82,22 @@ def fasta_stats(ff):
     # Use SeqIO from BipPython to parse fasta file.
     for record in SeqIO.parse(ff, 'fasta'):
 
+        print '%s' % record.id,
+        seq = record.seq
+
+        if args.all:
+            sys.stdout.write(count_gc(seq) + record_length(seq) + count_n(seq))
+
         if args.gc:
-            print '%s\t%s' % (record.id, SeqUtils.GC(record.seq))
+            sys.stdout.write(count_gc(seq))
 
-        elif args.length:
-            print '%s\t%s' % (record.id, len(record.seq))
+        if args.length:
+            sys.stdout.write(record_length(seq))
 
-        elif args.fasta:
-            print '%s\t%s\t%s' % (record.id, SeqUtils.GC(record.seq), len(record.seq))
+        if args.countn:
+            sys.stdout.write(count_n(seq))
+
+        print
 
 def bam_stats(filename, sf):
 
