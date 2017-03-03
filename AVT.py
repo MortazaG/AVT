@@ -42,16 +42,26 @@ except ImportError:
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py")
-parser.add_argument("infile", nargs="+", help="Fasta and/or BAM file")
-parser.add_argument("-f", "--fasta", action="store_true", help="Use in combination with -a, -g, -l, -n flags")
-parser.add_argument("-a", "--all", action="store_true", help="FASTA stats in columns - id, gc%%, length, N-count")
-parser.add_argument("-g", '--gc', action="store_true", help="FASTA id and GC%% in columns")
-parser.add_argument("-l", "--length", action="store_true", help="FASTA id and length in columns")
-parser.add_argument("-n", "--countn", action="store_true", help="FASTA id and N-count in columns")
-parser.add_argument("-b", "--bam", action="store_true", help="BAM - Overview")
-parser.add_argument("--gcc", action="store_true", help="Graph - plot GC%% against Coverage.\
-                                                        Requires both FASTA and BAM file.")
-parser.add_argument("--bcp", action="store_true", help="BAM Graph - Coverage per position")
+parser.add_argument("infile", nargs="+",
+                        help="Fasta and/or BAM file")
+parser.add_argument("-f", "--fasta", action="store_true",
+                        help="Use in combination with -a, -g, -l, -n flags")
+parser.add_argument("-a", "--all", action="store_true",
+                        help="FASTA stats in columns - id, gc%%, length, N-count")
+parser.add_argument("-g", '--gc', action="store_true",
+                        help="FASTA id and GC%% in columns")
+parser.add_argument("-l", "--length", action="store_true",
+                        help="FASTA id and length in columns")
+parser.add_argument("-n", "--countn", action="store_true",
+                        help="FASTA id and N-count in columns")
+parser.add_argument("-b", "--bam", action="store_true",
+                        help="BAM stats - Overview")
+parser.add_argument("-m", "--multimapped" action="store_true",
+                        help="Calculate the percentage of multimapped reads from BAM file")
+parser.add_argument("--gcc", action="store_true",
+                        help="Graph - plot GC%% against Coverage. Requires both FASTA and BAM file.")
+parser.add_argument("--bcp", action="store_true",
+                        help="BAM Graph - Coverage per position")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
