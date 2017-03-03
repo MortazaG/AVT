@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#-*- coding: UTF-8 -*-
 
 # Licence:
 
@@ -328,6 +329,40 @@ def open_bam(bf):
 
     return samfile
 
+def check_fasta(ff):
+
+    '''
+    Takes as input fastafile and checks if it is valid. Outputs Error
+    message if file is invalid, otherwise return ff.
+
+    Check for:
+    - Non IUPAC-Characters
+    '''
+
+    # Create list containing only IUPAC Characters
+    iupac = ['g', 'a', 't', 'c', 'r', 'y', 'w', 's', 'm',
+                'k', 'h', 'b', 'v', 'd', 'n', 'u', '.', '-']
+
+    # Create list containing common non-IUPAC characters
+    non_iupac = ['e', 'f', 'i', 'j', 'l', 'o', 'p', 'q', 'u', 'x', 'z',
+                    '*', '#', '!', '%', '_', '&', '?', '@', '£', '$', '+', '=',
+                    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+    # Loop through each individual sequence in fasta file
+    for record in SeqIO.parse(ff, 'fasta'):
+
+        seq = record.seq.lower()
+
+        # Use find() to check if there exists non-IUPAC characters in seq.
+        # If any are found, program will give an error and exit.
+        for char in non_iupac:
+            if seq.find(char) > -1:
+                print '[Error] Non-IUPAC characters were found in %s' %\
+                        record.id
+                exit()
+
+    return ff
+
 def check_infile(infile):
 
     '''
@@ -369,7 +404,7 @@ def main():
 
         # If True, call upon fasta_stats() with fasta filename as argument.
         if args.fasta:
-            fasta_stats(filename['fasta'])
+            fasta_stats(check_fasta(filename['fasta']))
 
         # If True, call upon bam_stats(), with filename and samfile as argument.
         if args.bam:
@@ -378,7 +413,8 @@ def main():
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.gcc:
             check_bam_sorted(filename['bam'], open_bam(filename['bam']))
-            bamf_gc_cov(filename['bam'], filename['fasta'], open_bam(filename['bam']))
+            bamf_gc_cov(filename['bam'], check_fasta(filename['fasta']), \
+                                            open_bam(filename['bam']))
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
