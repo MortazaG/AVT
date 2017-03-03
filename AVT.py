@@ -56,7 +56,7 @@ parser.add_argument("-n", "--countn", action="store_true",
                         help="FASTA id and N-count in columns")
 parser.add_argument("-b", "--bam", action="store_true",
                         help="BAM stats - Overview")
-parser.add_argument("-m", "--multimapped" action="store_true",
+parser.add_argument("-m", "--multimapped", action="store_true",
                         help="Calculate the percentage of multimapped reads from BAM file")
 parser.add_argument("--gcc", action="store_true",
                         help="Graph - plot GC%% against Coverage. Requires both FASTA and BAM file.")
@@ -260,6 +260,29 @@ def bam_cov_pos(filename, sf):
 
     sf.close()
 
+def bam_multimapped(sf):
+
+    '''
+    Take samfile as argument and calculate the percentage of multi-mapped reads.
+    Output results to stdout.
+    '''
+
+    # Create empty variables to keep count of all the paired reads + singletons
+    # and the amount of reads that are secondary.
+    tot = 0
+    multi_mapped = 0
+
+    for read in sf.fetch():
+
+        tot += 1
+
+        # Check if reads is secondary. Returns False if read is primary.
+        if read.is_secondary == True:
+            multi_mapped += 1
+
+    # Print the percentage of reads
+    print multi_mapped / tot
+
 def sort_bam(filename):
 
     '''
@@ -429,6 +452,9 @@ def main():
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
             bam_cov_pos(filename['bam'], open_bam(filename['bam']))
+
+        if args.multimapped:
+            bam_multimapped(open_bam(filename['bam']))
 
 
 # Makes sure main() is only run when this script is called from
