@@ -15,7 +15,7 @@
 # manually add 'sorted_'to your filename and the script will recognize it
 # as sorted.
 #
-# -gcr (gc_ref()) requires a sorted BAM file, if file is not sorted, you will
+# -gcc (bamf_gc_cov) requires a sorted BAM file, if file is not sorted, you will
 # get the option to do so. If you choose to sort it, the new filename will start
 # with sorted_. This new filename must be called upon next time you run -gcr.
 #
@@ -130,6 +130,9 @@ def bam_stats(filename, sf):
     unmap_reads = sf.unmapped
     tot_reads = map_reads + unmap_reads
 
+    # Store mapped reads, singletons.
+    map_singles = [read for read in sf.fetch() if read.mate_is_unmapped == True]
+
     # Calculate the sum of the reads lengths
     sum_reads_lengths = [len(read.seq) for read in sf.fetch()]
     sum_reads_lengths = sum(sum_reads_lengths)
@@ -147,11 +150,12 @@ def bam_stats(filename, sf):
 
     # Print extracted information from the BAM file to txt file
     print 'Reference size: %d\r\n' % ref_size,
-    print 'Total number of reads: %d\r\n' % tot_reads,
+    print 'Number of reads: %d\r\n' % tot_reads,
     print 'Mapped reads: %d (%.2f%%)\r\n' % (map_reads,\
                                         (map_reads/float(tot_reads))*100),
     print 'Unmapped reads: %d (%.2f%%)\r\n' % (unmap_reads,\
                                         (unmap_reads/float(tot_reads))*100),
+    print 'Mapped reads, singletons %d\r\n' % (len(map_singles)),
     print 'Average read length: %.2f\r\n' % av_read_length,
     print 'Average coverage: %.4f\r\n\r\n' % av_coverage,
 
