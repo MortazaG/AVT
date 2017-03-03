@@ -113,11 +113,10 @@ def fasta_stats(ff):
 def bam_stats(filename, sf):
 
     '''
-    Write necessary information from a BAM file to txt file.
-    BAM filehandle is received through the sf argument.
+    Print necessary information from a BAM file.
 
-    Receives filename and open_bam()'s' samfile as argument.
-    Outputs information to txt file in results/ folder.
+    Receives filename and open_bam()'s samfile as argument.
+    Outputs information to stdout.
     '''
 
     # Calculate the total length of the reference sequence.
