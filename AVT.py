@@ -166,14 +166,14 @@ def bam_stats(filename, sf):
 def bamf_gc_cov(filename, ff, sf):
 
     '''
-    Plot GC-content against Coverage.
+    Plot GC-content against Coverage for each individual reference.
 
     Coverage is calculated as follows:
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
 
     Receives filename, fastafile and open_bam()'s' samfile as argument.
-    Outputs graphs as pdf file in results/graphs/ folder.
+    Outputs matplotlib graph.
     '''
 
     # Create lists to hold reference names and lengths
@@ -207,20 +207,40 @@ def bamf_gc_cov(filename, ff, sf):
     id_ = []
     refs_gc = []
 
+    # Loop through each sequence to fetch its ID and GC-content.
     for entry in SeqIO.parse(ff, 'fasta'):
         id_.append(entry.id)
         refs_gc.append(SeqUtils.GC(entry.seq))
 
-    import numpy as npy
-
     def onpick(event):
+
+        '''
+        Take pick event as argument, when user picks a specific point on
+        the graph, and print out its available data.
+        '''
+
+        # Numpy is needed to fetch the data for a specific point on the graph
+        import numpy as np
+
+        # Set index ind as the index nr of the picked point on the graph
         ind = event.ind
+
+        # np.take(array, index) is used to fetch the available data for the
+        # picked point on the graph.
         print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
-                (npy.take(refs, ind), npy.take(refs_cov, ind), npy.take(refs_gc, ind), npy.take(refs_lengths, ind))
+                (np.take(refs, ind), np.take(refs_cov, ind), np.take(refs_gc, ind), np.take(refs_lengths, ind))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    col = ax.scatter(refs_cov, refs_gc, picker=0.5)
+    ax.scatter(refs_cov, refs_gc, picker=0.5)   # Picker specifies the
+                                                # sensitivity of the user
+                                                # pick. A lower value
+                                                # narows down the area of
+                                                # the data point that the user
+                                                # can click on.
+
+    # Connect the user pick event with the function onpick(). User pickevent
+    # is given as argument.
     fig.canvas.mpl_connect('pick_event', onpick)
 
     plt.show()
@@ -285,6 +305,9 @@ def bam_multimapped(sf):
 
     # Print the percentage of reads
     print multi_mapped / tot
+
+def bam_read_dist(filename):
+    pass
 
 def sort_bam(filename):
 
@@ -446,7 +469,7 @@ def main():
         if args.bam:
             bam_stats(filename['bam'], open_bam(filename['bam']))
 
-        # If True, call upon bam_cov_ref(), with filename and samfile as argument.
+        # If True, call upon bamf_gc_cov(), with filename and samfile as argument.
         if args.gcc:
             check_bam_sorted(filename['bam'], open_bam(filename['bam']))
             bamf_gc_cov(filename['bam'], check_fasta(filename['fasta']), \
@@ -456,6 +479,7 @@ def main():
         if args.bcp:
             bam_cov_pos(filename['bam'], open_bam(filename['bam']))
 
+        # If True, call on bam_multimapped with filename as argument.
         if args.multimapped:
             bam_multimapped(open_bam(filename['bam']))
 
