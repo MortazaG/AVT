@@ -309,10 +309,12 @@ def bam_multimapped(sf):
 def bam_read_dist(filename):
     pass
 
-def sort_bam(filename):
+def sort_bam(bf):
 
     '''
-    Takes as argument the filename. Inform the user that BAM file
+    BAM filename is received through the bf argument.
+
+    Inform the user that BAM file
     needs to be sorted and asks if they wan't the program to sort it
     for them. Exit when done.
     '''
@@ -320,42 +322,44 @@ def sort_bam(filename):
     choice = raw_input('Sort BAM file by coordinate now? [y/n]: ').lower()
 
     if choice == 'y':
-        pysam.sort(filename, '-o', 'sorted_' + filename)
-        print 'sorted_' + filename + ' was sucessfully created.'
+        pysam.sort(bf, '-o', 'sorted_' + bf)
+        print 'sorted_' + bf + ' was sucessfully created.'
         exit()
     else:
         print '[Error] Exiting, BAM file is not sorted accordingly'
         exit()
 
-def check_bam_sorted(filename, sf):
+def check_bam_sorted(bf):
 
     '''
-    Takes as arguments filename and samfile. Checks if file is sorted by
-    looking for the @HD subtag SO, alternatively by checking if 'sorted'
-    is in the filename. Call on sort_bam(filename) if none of these are found.
+    BAM filename is received through the bf argument. Checks if file is sorted
+    by looking for the @HD subtag SO and then the 'coordinate' value in header.
+    If none of these are found, check if 'sorted' is in BAM filename.
+
+    Call on sort_bam(bf) if all else fails.
     '''
 
-    # Store the header for samfile
-    header = sf.header
+    # Store all the headers for bamfile
+    headers = pysam.view('-H', bf)
 
     try:
         # Check for the existence of @HD, SO tag. Raise exception if absent.
-        if not header['HD']['SO']:
+        if not 'SO' in headers:
             raise Exception
 
     except Exception:
         print '[Error] Missing tag: @HD, SO'
-        sort_bam(filename)
+        sort_bam(bf)
 
     else:
 
         # Check if @HD, SO is set to coordinate and if 'sorted' can be found
-        # in the filename, call on sort_bam otherwise.
-        if header['HD']['SO'] != 'coordinate':
+        # in the bf, call on sort_bam otherwise.
+        if 'coordinate' not in headers:
 
-            if 'sorted' not in filename:
+            if 'sorted' not in bf:
                 print '[Error] BAM file is not sorted by coordinate'
-                sort_bam(filename)
+                sort_bam(bf)
 
 def open_bam(bf):
 
@@ -471,7 +475,7 @@ def main():
 
         # If True, call upon bamf_gc_cov(), with filename and samfile as argument.
         if args.gcc:
-            check_bam_sorted(filename['bam'], open_bam(filename['bam']))
+            check_bam_sorted(filename['bam'])
             bamf_gc_cov(filename['bam'], check_fasta(filename['fasta']), \
                                             open_bam(filename['bam']))
 
