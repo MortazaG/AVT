@@ -315,10 +315,18 @@ def bam_read_dist(sf):
     Take as input open_bam()'s samfile and output histogram plot.
     '''
 
+    # Initialize list for storing the read-pair distances
     distances = []
+
     for read in sf.fetch():
 
+        # We don't want to get doubles, so we only use read1 and only reads
+        # that are mapped.
         if read.is_read1 == True and read.is_unmapped == False:
+
+            # This condition checks if read1's position is after its mate.
+            # In that case we need to compensate in order to get a positive
+            # value for the read-pair distance.
             if read.reference_start > read.next_reference_start:
                 read_end = read.next_reference_start + 101
                 mate_start = read.reference_start
@@ -327,22 +335,29 @@ def bam_read_dist(sf):
                 read_end = read.reference_end
                 mate_start = read.next_reference_start
 
+            # Distance is measured between the end position of read1 and
+            # start position of its mate.
             distance = mate_start - read_end
 
+            # Exclude distances below 0
             if distance < 0:
                 distance = 0
 
+            # Exclude distances above 1000
             elif distance > 1000:
                 distance = 0
 
+            # Append all other distance values to distances.
             else:
                 distances.append(distance)
 
+    # Import numpy so that we can print out the mean and std.
     import numpy as np
 
     print 'Average read-pair distance: %d' % np.mean(distances)
     print 'Standard deviation: %d' % np.std(distances)
 
+    # Generate bins for histogram
     bins = [x for x in range(0, max(distances), 50)]
 
     plt.hist(distances, bins, rwidth=0.95, facecolor='g', alpha=0.8)
@@ -519,8 +534,8 @@ def main():
         # If True, call upon bamf_gc_cov(), with filename and samfile as argument.
         if args.gcc:
             check_bam_sorted(filename['bam'])
-            bamf_gc_cov(filename['bam'], check_fasta(filename['fasta']), \
-                                            open_bam(filename['bam']))
+            check_fasta(filename['fasta'])
+            bamf_gc_cov(filename['fasta'], open_bam(filename['bam']))
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
