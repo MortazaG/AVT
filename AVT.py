@@ -62,6 +62,8 @@ parser.add_argument("--gcc", action="store_true",
                         help="Graph - plot GC%% against Coverage. Requires both FASTA and BAM file.")
 parser.add_argument("--bcp", action="store_true",
                         help="BAM Graph - Coverage per position")
+parser.add_argument("-r", "--rdistance", action="store_true",
+                        help="BAM Graph - Histrogram distribution plot of read-pair distances")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -163,7 +165,7 @@ def bam_stats(filename, sf):
 
     sf.close()
 
-def bamf_gc_cov(filename, ff, sf):
+def bamf_gc_cov(ff, sf):
 
     '''
     Plot GC-content against Coverage for each individual reference.
@@ -172,7 +174,7 @@ def bamf_gc_cov(filename, ff, sf):
     coverage = (read_length*read_count)/reference_length
     We will be using the average read length for each reference
 
-    Receives filename, fastafile and open_bam()'s' samfile as argument.
+    Receives fastafile and open_bam()'s' samfile as argument.
     Outputs matplotlib graph.
     '''
 
@@ -306,8 +308,49 @@ def bam_multimapped(sf):
     # Print the percentage of reads
     print multi_mapped / tot
 
-def bam_read_dist(filename):
-    pass
+def bam_read_dist(sf):
+
+    '''
+    Determine the distance between read pairs.
+    Take as input open_bam()'s samfile and output histogram plot.
+    '''
+
+    distances = []
+    for read in sf.fetch():
+
+        if read.is_read1 == True and read.is_unmapped == False:
+            if read.reference_start > read.next_reference_start:
+                read_end = read.next_reference_start + 101
+                mate_start = read.reference_start
+
+            else:
+                read_end = read.reference_end
+                mate_start = read.next_reference_start
+
+            distance = mate_start - read_end
+
+            if distance < 0:
+                distance = 0
+
+            elif distance > 1000:
+                distance = 0
+
+            else:
+                distances.append(distance)
+
+    import numpy as np
+
+    print 'Average read-pair distance: %d' % np.mean(distances)
+    print 'Standard deviation: %d' % np.std(distances)
+
+    bins = [x for x in range(0, max(distances), 50)]
+
+    plt.hist(distances, bins, rwidth=0.95, facecolor='g', alpha=0.8)
+
+    plt.xlabel('distance (bp)')
+    plt.ylabel('Amount')
+    plt.xticks(bins)
+    plt.show()
 
 def sort_bam(bf):
 
@@ -486,6 +529,9 @@ def main():
         # If True, call on bam_multimapped with filename as argument.
         if args.multimapped:
             bam_multimapped(open_bam(filename['bam']))
+
+        if args.rdistance:
+            bam_read_dist(open_bam(filename['bam']))
 
 
 # Makes sure main() is only run when this script is called from
