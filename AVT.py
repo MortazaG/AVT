@@ -62,8 +62,9 @@ parser.add_argument("--gcc", action="store_true",
                         help="Graph - plot GC%% against Coverage. Requires both FASTA and BAM file.")
 parser.add_argument("--bcp", action="store_true",
                         help="BAM Graph - Coverage per position")
-parser.add_argument("-r", "--rdistance", action="store_true",
-                        help="BAM Graph - Histrogram distribution plot of read-pair distances")
+parser.add_argument("-r", "--rdist", nargs=3, type=int,
+                        help="BAM Graph - Histrogram distribution plot of read-pair distances.\
+                        Set range by determining min and max, set bins with step.")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -230,7 +231,7 @@ def bamf_gc_cov(ff, sf):
         # np.take(array, index) is used to fetch the available data for the
         # picked point on the graph.
         print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
-                (np.take(refs, ind), np.take(refs_cov, ind), np.take(refs_gc, ind), np.take(refs_lengths, ind))
+                (np.take(refs, ind)[0], np.take(refs_cov, ind), np.take(refs_gc, ind), np.take(refs_lengths, ind))
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -315,6 +316,10 @@ def bam_read_dist(sf):
     Take as input open_bam()'s samfile and output histogram plot.
     '''
 
+    minimum = args.rdist[0]
+    maximum = args.rdist[1]
+    step = args.rdist[2]
+
     # Initialize list for storing the read-pair distances
     distances = []
 
@@ -340,12 +345,12 @@ def bam_read_dist(sf):
             distance = mate_start - read_end
 
             # Exclude distances below 0
-            if distance < 0:
-                distance = 0
+            if distance < minimum:
+                continue
 
             # Exclude distances above 1000
-            elif distance > 1000:
-                distance = 0
+            elif distance > maximum:
+                continue
 
             # Append all other distance values to distances.
             else:
@@ -354,11 +359,11 @@ def bam_read_dist(sf):
     # Import numpy so that we can print out the mean and std.
     import numpy as np
 
-    print 'Average read-pair distance: %d' % np.mean(distances)
-    print 'Standard deviation: %d' % np.std(distances)
+    print 'Average read-pair distance: %.2f' % np.mean(distances)
+    print 'Standard deviation: %.2f' % np.std(distances)
 
     # Generate bins for histogram
-    bins = [x for x in range(0, max(distances), 50)]
+    bins = [x for x in range(0, max(distances), step)]
 
     plt.hist(distances, bins, rwidth=0.95, facecolor='g', alpha=0.8)
 
@@ -545,7 +550,7 @@ def main():
         if args.multimapped:
             bam_multimapped(open_bam(filename['bam']))
 
-        if args.rdistance:
+        if args.rdist:
             bam_read_dist(open_bam(filename['bam']))
 
 
