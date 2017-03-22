@@ -309,19 +309,17 @@ def bam_multimapped(sf):
     # Print the percentage of reads
     print multi_mapped / tot
 
-def bam_read_dist(sf):
+def bam_read_dist(sf, minimum, maximum, step):
 
     '''
     Determine the distance between read pairs.
     Take as input open_bam()'s samfile and output histogram plot.
     '''
 
-    minimum = args.rdist[0]
-    maximum = args.rdist[1]
-    step = args.rdist[2]
-
-    # Initialize list for storing the read-pair distances
+    # Initialize lists for storing the read-pair distances
     distances = []
+    negatives = []
+    outliers = []
 
     for read in sf.fetch():
 
@@ -346,11 +344,11 @@ def bam_read_dist(sf):
 
             # Exclude distances below 0
             if distance < minimum:
-                continue
+                negatives.append(distance)
 
             # Exclude distances above 1000
             elif distance > maximum:
-                continue
+                outliers.append(distance)
 
             # Append all other distance values to distances.
             else:
@@ -359,8 +357,12 @@ def bam_read_dist(sf):
     # Import numpy so that we can print out the mean and std.
     import numpy as np
 
+    print
     print 'Average read-pair distance: %.2f' % np.mean(distances)
     print 'Standard deviation: %.2f' % np.std(distances)
+    print 'Below %s: %d' % (minimum, len(negatives))
+    print 'Above %s: %d' % (maximum, len(outliers))
+    print
 
     # Generate bins for histogram
     bins = [x for x in range(0, max(distances), step)]
@@ -551,7 +553,7 @@ def main():
             bam_multimapped(open_bam(filename['bam']))
 
         if args.rdist:
-            bam_read_dist(open_bam(filename['bam']))
+            bam_read_dist(open_bam(filename['bam']), args.rdist[0], args.rdist[1], args.rdist[2])
 
 
 # Makes sure main() is only run when this script is called from
