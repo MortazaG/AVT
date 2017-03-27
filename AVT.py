@@ -39,9 +39,18 @@ except ImportError:
 	else:
 		sys.exit("[Error] Exiting due to missing dependency 'argparser'")
 
+
+class RdistAction(argparse.Action):
+    def __call__(self,parser,namespace,values,option_string=None):
+        if not values:
+            setattr(namespace,self.dest,[0, 1000, 50])
+        else:
+            setattr(namespace,self.dest,values)
+
+
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
-parser = argparse.ArgumentParser(prog="avt.py")
+parser = argparse.ArgumentParser(prog="avt.py", usage='%(prog)s <infile> [optional argument]')
 parser.add_argument("infile", nargs="+",
                         help="Fasta and/or BAM file")
 parser.add_argument("-f", "--fasta", action="store_true",
@@ -59,12 +68,12 @@ parser.add_argument("-b", "--bam", action="store_true",
 parser.add_argument("-m", "--multimapped", action="store_true",
                         help="Calculate the percentage of multimapped reads from BAM file")
 parser.add_argument("--gcc", action="store_true",
-                        help="Graph - plot GC%% against Coverage. Requires both FASTA and BAM file.")
+                        help="Graph - plot GC%% against Coverage, requires both FASTA and BAM file")
 parser.add_argument("--bcp", action="store_true",
                         help="BAM Graph - Coverage per position")
-parser.add_argument("-r", "--rdist", nargs=3, type=int,
+parser.add_argument("-r", "--rdist", action=RdistAction, nargs='*', metavar='value', type=int,
                         help="BAM Graph - Histrogram distribution plot of read-pair distances.\
-                        Set range by determining min and max, set bins with step.")
+                        Range and bin size are set in order: min max bin (Default = 0 1000 50)")
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
