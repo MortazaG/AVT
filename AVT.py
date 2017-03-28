@@ -39,18 +39,27 @@ except ImportError:
 	else:
 		sys.exit("[Error] Exiting due to missing dependency 'argparser'")
 
-
+# Create action to handle the -r/--rdist flag,
+# using argparse.Action as parent class
 class RdistAction(argparse.Action):
+
+    # Override the __call__ method in order to set manual values,
+    # namespace is the object containing all the flags and their resp. values
     def __call__(self,parser,namespace,values,option_string=None):
+
+        # If no values are present, set rdist(self.dest) in namespace to
+        # given values. self.dest = name of flag
         if not values:
             setattr(namespace,self.dest,[0, 1000, 50])
+
+        # Otherwise, use the values that were given by the user
         else:
             setattr(namespace,self.dest,values)
 
 
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
-parser = argparse.ArgumentParser(prog="avt.py", usage='%(prog)s <infile> [optional argument]')
+parser = argparse.ArgumentParser(prog="avt.py", usage='%(prog)s <infile(s)> [optional argument(s)]')
 parser.add_argument("infile", nargs="+",
                         help="Fasta and/or BAM file")
 parser.add_argument("-f", "--fasta", action="store_true",
