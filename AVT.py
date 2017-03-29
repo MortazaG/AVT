@@ -264,6 +264,8 @@ def bamf_gc_cov(ff, sf):
     # is given as argument.
     fig.canvas.mpl_connect('pick_event', onpick)
 
+    plt.title('GC against Coverage')
+    plt.xlabel('Coverage')
     plt.show()
 
     plt.close()
