@@ -56,7 +56,6 @@ class RdistAction(argparse.Action):
         else:
             setattr(namespace,self.dest,values)
 
-
 # Initialization of argparser, with the name of the program and
 # the necessary arguments.
 parser = argparse.ArgumentParser(prog="avt.py", usage='%(prog)s <infile(s)> [optional argument(s)]')
@@ -78,8 +77,9 @@ parser.add_argument("-m", "--multimapped", action="store_true",
                         help="Calculate the percentage of multimapped reads from BAM file")
 parser.add_argument("--gcc", action="store_true",
                         help="Graph - plot GC%% against Coverage, requires both FASTA and BAM file")
-parser.add_argument("--bcp", action="store_true",
-                        help="BAM Graph - Coverage per position")
+parser.add_argument("--bcp", nargs='?', metavar='n', const=2, type=int,
+                        help="BAM Graph - Coverage per position for the n longest sequences. \
+                        (Default = 5).")
 parser.add_argument("-r", "--rdist", action=RdistAction, nargs='*', metavar='value', type=int,
                         help="BAM Graph - Histrogram distribution plot of read-pair distances.\
                         Range and bin size are set in order: min max bin (Default = 0 1000 50)")
@@ -269,20 +269,36 @@ def bamf_gc_cov(ff, sf):
     plt.close()
     sf.close()
 
-def bam_cov_pos(filename, sf):
+def bam_cov_pos(filename, sf, top):
 
     '''
     Produce 'coverage per position' graph for each individual reference
 
-    Receives filename and open_bam()'s' samfile as argument.
-    Outputs graph as a pdf file in results/graphs/ folder.
+    Receives filename, open_bam()'s' samfile and user input as argument.
+    Outputs the n longest (user input) graphs as a pdf file in graphs/ folder.
     '''
 
-    # Create lists to hold reference names and lengths
+    # Create variables to hold tuples of reference names and lengths
     refs = sf.references
+    refs_lengths = sf.lengths
+
+    # Create dictionary with the reference lengths as keys
+    refs_dic = dict(zip(refs_lengths, refs))
+
+    # Sort refs_lengths in ascending order and then store
+    # the top lengths as a separate list.
+    refs_lengths = sorted(refs_lengths)
+    top_lengths = refs_lengths[-top:]
+
+    # Initiate list for holding the reference names(values from refs_dic)
+    # of the top lengths.
+    top_refs = []
+
+    for item in top_lengths:
+        top_refs.append(refs_dic[item])
 
     # Loop through individual references
-    for ref in refs:
+    for ref in top_refs:
 
         # Use pysam pileup to get coverage for each position in reference
         # pileup() uses 0-based indexing, thus we have to add 1 for each pos
@@ -296,10 +312,9 @@ def bam_cov_pos(filename, sf):
         plt.title('Coverage across reference ' + ref + '\n')
         plt.ylabel('Mean Coverage')
         plt.xlabel('Position (bp)')
-        plt.xticks(ref_pos, [])
         plt.grid()
 
-        plt.savefig('results/graphs/' + filename + ref + '_cov_pos.pdf', bbox_inches='tight')
+        plt.savefig('graphs/' + filename + ref + '_coverage.pdf', bbox_inches='tight')
         plt.close()
 
     sf.close()
@@ -564,7 +579,7 @@ def main():
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
-            bam_cov_pos(filename['bam'], open_bam(filename['bam']))
+            bam_cov_pos(filename['bam'], open_bam(filename['bam']), args.bcp)
 
         # If True, call on bam_multimapped with filename as argument.
         if args.multimapped:
@@ -582,7 +597,7 @@ if __name__ == "__main__":
 
     # Create necessary folders if they don't already exist
     try:
-        os.makedirs('results/graphs')
+        os.makedirs('graphs')
 
     except OSError:
         pass
