@@ -77,7 +77,7 @@ parser.add_argument("-m", "--multimapped", action="store_true",
                         help="Calculate the percentage of multimapped reads from BAM file")
 parser.add_argument("--gcc", action="store_true",
                         help="Graph - plot GC%% against Coverage, requires both FASTA and BAM file")
-parser.add_argument("--bcp", nargs='?', metavar='n', const=2, type=int,
+parser.add_argument("--bcp", nargs='?', metavar='n', const=5, type=int,
                         help="BAM Graph - Coverage per position for the n longest sequences. \
                         (Default = 5).")
 parser.add_argument("-r", "--rdist", action=RdistAction, nargs='*', metavar='value', type=int,
@@ -197,6 +197,57 @@ def bamf_gc_cov(ff, sf):
     Outputs matplotlib graph.
     '''
 
+    import numpy as np
+
+    class _PointBrowser(object):
+
+        """
+        Click on a point to select and highlight it -- the data that
+        generated the point will be shown in the lower axes.  Use the 'n'
+        and 'p' keys to browse through the next and previous points
+        """
+
+        def __init__(self):
+            self.lastind = 0
+
+            self.selected, = ax.plot([refs_cov[0]], [refs_gc[0]], 'o', ms=6, alpha=0.8,
+                                     color='red', visible=False)
+
+        def onpick(self, event):
+
+            if event.artist != plot:
+                return True
+
+            N = len(event.ind)
+            if not N:
+                return True
+
+            dataind = event.ind[0]
+
+            print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
+                        (np.take(refs, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths, dataind))
+
+            self.lastind = dataind
+            self.update()
+
+        def update(self):
+            if self.lastind is None:
+                return
+
+            dataind = self.lastind
+
+            ax2.cla()
+            ax2.plot()
+
+            ax2.text(0.05, 0.9, 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
+                    (np.take(refs, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths, dataind)), \
+                    transform=ax2.transAxes, va='top')
+
+            self.selected.set_visible(True)
+            self.selected.set_data(refs_cov[dataind], refs_gc[dataind])
+
+            fig.canvas.draw()
+
     # Create lists to hold reference names and lengths
     refs = sf.references
     refs_lengths = sf.lengths
@@ -233,43 +284,30 @@ def bamf_gc_cov(ff, sf):
         id_.append(entry.id)
         refs_gc.append(SeqUtils.GC(entry.seq))
 
-    def onpick(event):
+    fig, (ax, ax2) = plt.subplots(2, 1)
+    plt.subplots_adjust(hspace=0.3)
 
-        '''
-        Take pick event as argument, when user picks a specific point on
-        the graph, and print out its available data.
-        '''
+    ax.set_title('GC against Coverage')
+    ax.set_xlabel('Coverage')
+    ax.set_ylabel('GC%')
+    ax2.tick_params(
+        axis='both',
+        which='both',
+        bottom='off',
+        top='off',
+        labelbottom='off',
+        labelleft='off',
+        right='off',
+        left='off'
+    )
+    plot, = ax.plot(refs_cov, refs_gc, 'o', picker=3)  # 3 points tolerance
 
-        # Numpy is needed to fetch the data for a specific point on the graph
-        import numpy as np
+    # Connect the user pick event with the class function browser.onpick().
+    # User pick event is given as argument.
+    browser = _PointBrowser()
+    fig.canvas.mpl_connect('pick_event', browser.onpick)
 
-        # Set index ind as the index nr of the picked point on the graph
-        ind = event.ind
-
-        # np.take(array, index) is used to fetch the available data for the
-        # picked point on the graph.
-        print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
-                (np.take(refs, ind)[0], np.take(refs_cov, ind), np.take(refs_gc, ind), np.take(refs_lengths, ind))
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.scatter(refs_cov, refs_gc, picker=0.5)   # Picker specifies the
-                                                # sensitivity of the user
-                                                # pick. A lower value
-                                                # narows down the area of
-                                                # the data point that the user
-                                                # can click on.
-
-    # Connect the user pick event with the function onpick(). User pickevent
-    # is given as argument.
-    fig.canvas.mpl_connect('pick_event', onpick)
-
-    plt.title('GC against Coverage')
-    plt.ylabel('GC%')
-    plt.xlabel('Coverage')
     plt.show()
-
-    plt.close()
     sf.close()
 
 def bam_cov_pos(filename, sf, top):
