@@ -331,12 +331,9 @@ def bam_cov_pos(filename, sf, top):
     refs_lengths = sorted(refs_lengths)
     top_lengths = refs_lengths[-top:]
 
-    # Initiate list for holding the reference names(values from refs_dic)
+    # List comprehension for holding the reference names(values from refs_dic)
     # of the top lengths.
-    top_refs = []
-
-    for item in top_lengths:
-        top_refs.append(refs_dic[item])
+    top_refs = [refs_dic[item] for item in top_lengths]
 
     # Loop through individual references
     for ref in top_refs:
