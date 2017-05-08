@@ -440,8 +440,9 @@ def bam_read_dist(sf, minimum, maximum, step):
 
     plt.hist(distances, bins, rwidth=0.95, facecolor='g', alpha=0.8)
 
-    plt.xlabel('distance (bp)')
-    plt.ylabel('Amount')
+    plt.title('Distribution plot of read-pair distances')
+    plt.xlabel('Distance (bp)')
+    plt.ylabel('Number of reads')
     plt.xticks(bins)
     plt.show()
 
