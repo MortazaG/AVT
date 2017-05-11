@@ -571,6 +571,8 @@ def check_infile(infile):
     as key and filename as value.
     '''
 
+    import os.path
+
     # More than two arguments returns an Error and exits the program
     if len(infile) > 2:
         print '[Error] Too many arguments.'
@@ -580,6 +582,11 @@ def check_infile(infile):
     # Loop through infile list by index nr and check if it's a bam file.
     # All other files are considered to be fasta files.
     for i in range(len(infile)):
+
+        # Check if the given filename(s) exist.
+        if os.path.isfile(infile[i]) == False:
+            print '\n[Error]: %s - Wrong filename / file does not exist!\n' % infile[i]
+            exit()
 
         if '.bam' in infile[i]:
             filename['bam'] = infile[i]
