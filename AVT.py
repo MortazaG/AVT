@@ -239,6 +239,7 @@ def bamf_gc_cov(ff, sf):
             ax2.cla()
             ax2.plot()
 
+            ax2.set_title('Summary for selected data point')
             ax2.text(0.05, 0.9, 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
                     (np.take(refs, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths, dataind)), \
                     transform=ax2.transAxes, va='top')
@@ -285,7 +286,7 @@ def bamf_gc_cov(ff, sf):
         refs_gc.append(SeqUtils.GC(entry.seq))
 
     fig, (ax, ax2) = plt.subplots(2, 1)
-    plt.subplots_adjust(hspace=0.3)
+    plt.subplots_adjust(hspace=0.45) # Set the distance between the two plots.
 
     ax.set_title('GC against Coverage')
     ax.set_xlabel('Coverage')
