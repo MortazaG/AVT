@@ -2,23 +2,21 @@
 #-*- coding: UTF-8 -*-
 
 # Licence:
+# Copyright (C) 2017 Mortaza Ghanbarzehi, mortaza30@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Usage:
-# For BAM tasks, pysam looks for a BAM index file in the same folder.
-# If index file is absent, the program will offer to produce one for you.
-# The new filename will end with ''.bam.bai'.
-#
-# Certain BAM tasks require the file to be sorted by coordinate. If it is not,
-# the program will offer to produce a sorted version of the file for you.
-# The new filename will start with 'sorted_'. Alternatively, if the file is
-# sorted even though the @HD, SO tag is missing or set to 'unsorted', you can
-# manually add 'sorted_'to your filename and the script will recognize it
-# as sorted.
-#
-# -gcc (bamf_gc_cov) requires a sorted BAM file, if file is not sorted, you will
-# get the option to do so. If you choose to sort it, the new filename will start
-# with sorted_. This new filename must be called upon next time you run -gcr.
-#
 import sys
 import pysam
 import matplotlib.pyplot as plt
