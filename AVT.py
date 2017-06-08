@@ -510,7 +510,7 @@ def open_bam(bf):
 
     # Check if BAM file has an index file. If False, give option
     # to create index file.
-    if samfile.has_index() == False:
+    if samfile.check_index() == False:
         print '\nNo BAM index file could be found for %s' % (bf)
 
         bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
