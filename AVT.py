@@ -74,9 +74,11 @@ parser.add_argument("-b", "--bam", action="store_true",
 parser.add_argument("-m", "--multimapped", action="store_true",
                         help="Calculate the percentage of multimapped reads from BAM file")
 parser.add_argument("--gcc", action="store_true",
-                        help="Graph - plot GC%% against Coverage, requires both FASTA and BAM file")
+                        help="Graph - plot GC%% against Coverage, requires both FASTA and BAM file. BAM file needs to be sorted by coordinate.")
+parser.add_argument("-s", "--sorted", action="store_true",
+                        help="Set this flag if you know for certain the BAM file is sorted")
 parser.add_argument("--bcp", nargs='?', metavar='n', const=5, type=int,
-                        help="BAM Graph - Coverage per position for the n longest sequences. \
+                        help="BAM Graph - Coverage per position for the n longest sequences \
                         (Default = 5).")
 parser.add_argument("-r", "--rdist", action=RdistAction, nargs='*', metavar='value', type=int,
                         help="BAM Graph - Histrogram distribution plot of read-pair distances.\
@@ -618,7 +620,10 @@ def main():
 
         # If True, call upon bamf_gc_cov(), with filename and samfile as argument.
         if args.gcc:
-            check_bam_sorted(filename['bam'])
+
+            if not args.sorted:
+                check_bam_sorted(filename['bam'])
+
             check_fasta(filename['fasta'])
             bamf_gc_cov(filename['fasta'], open_bam(filename['bam']))
 
