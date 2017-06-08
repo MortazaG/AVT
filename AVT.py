@@ -624,8 +624,12 @@ def main():
             if not args.sorted:
                 check_bam_sorted(filename['bam'])
 
-            check_fasta(filename['fasta'])
-            bamf_gc_cov(filename['fasta'], open_bam(filename['bam']))
+            try:
+                check_fasta(filename['fasta'])
+                bamf_gc_cov(filename['fasta'], open_bam(filename['bam']))
+
+            except KeyError:
+                print '[Error] You forgot to type in either the BAM or FASTA filename!'
 
         # If True, call upon bam_cov_ref(), with filename and samfile as argument.
         if args.bcp:
