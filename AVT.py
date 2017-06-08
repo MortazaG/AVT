@@ -510,25 +510,30 @@ def open_bam(bf):
     # Open BAM file using pysam
     samfile = pysam.AlignmentFile(bf, 'rb')
 
-    # Check if BAM file has an index file. If False, give option
-    # to create index file.
-    if samfile.check_index() == False:
-        print '\nNo BAM index file could be found for %s' % (bf)
+    try:
+        # Check if BAM file has an index file. If False, give option
+        # to create index file.
+        if samfile.check_index() == False:
+            print '\nNo BAM index file could be found for %s' % (bf)
 
-        bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
+            bam_bai = raw_input('Produce index file now? [y/n]: ').lower()
 
-        if bam_bai == 'y':
-            pysam.index(bf)
+            if bam_bai == 'y':
+                pysam.index(bf)
 
-        elif bam_bai == 'n':
-            print '\n[Error] Can\'t run program without BAM index file.\n'
+            elif bam_bai == 'n':
+                print '\n[Error] Can\'t run program without BAM index file.\n'
 
-        else:
-            print '\nSomething wen\'t wrong...\n'
+            else:
+                print '\nSomething wen\'t wrong...\n'
 
-        exit()
+            exit()
 
-    return samfile
+    except AttributeError:
+        return samfile
+
+    else:
+        return samfile
 
 def check_fasta(ff):
 
