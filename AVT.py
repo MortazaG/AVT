@@ -224,8 +224,8 @@ def bamf_gc_cov(ff, sf):
 
             dataind = event.ind[0]
 
-            print 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
-                        (np.take(refs, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths, dataind))
+            print 'Reference: %s\nCoverage: %.3f\nGC: %.3f%%\nLength: %d\n' % \
+                        (np.take(refs_new, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths_new, dataind))
 
             self.lastind = dataind
             self.update()
@@ -240,8 +240,8 @@ def bamf_gc_cov(ff, sf):
             ax2.plot()
 
             ax2.set_title('Summary for selected data point')
-            ax2.text(0.05, 0.9, 'Reference: %s\nCoverage: %.2f\nGC: %.2f%%\nLength: %d\n' % \
-                    (np.take(refs, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths, dataind)), \
+            ax2.text(0.05, 0.9, 'Reference: %s\nCoverage: %.3f\nGC: %.3f%%\nLength: %d\n' % \
+                    (np.take(refs_new, dataind), np.take(refs_cov, dataind), np.take(refs_gc, dataind), np.take(refs_lengths_new, dataind)), \
                     transform=ax2.transAxes, va='top')
 
             self.selected.set_visible(True)
@@ -254,7 +254,9 @@ def bamf_gc_cov(ff, sf):
     refs_lengths = sf.lengths
 
     # Initialize empty list which will contain coverage for each reference
+    # and a list to hold the names of all refs with zero mapped bases.
     refs_cov = []
+    zeros = []
 
     # Loop through references by index nr and calculate coverage
     for i in range(len(refs)):
@@ -263,6 +265,10 @@ def bamf_gc_cov(ff, sf):
         # average read length. This is done using pysams fetch()
         read_lengths = [len(read.seq) for read in sf.fetch(refs[i])]
         sum_read_lengths = sum(read_lengths)
+
+        if sf.count(refs[i]) < 1:
+            zeros.append(refs[i])
+            continue
 
         # Create list to hold total reads for reference
         tot_reads = sf.count(refs[i])
@@ -275,15 +281,23 @@ def bamf_gc_cov(ff, sf):
         ref_cov = (tot_reads * av_read_length) / float(ref_length)
         refs_cov.append(ref_cov)
 
-    # Initialize empty list to contain the id and gc-content of
-    # each reference sequence.
-    id_ = []
+    # Initialize empty list to contain the gc-content of each reference sequence.
     refs_gc = []
 
-    # Loop through each sequence to fetch its ID and GC-content.
+    # Loop through each sequence to fetch its GC-content.
     for entry in SeqIO.parse(ff, 'fasta'):
-        id_.append(entry.id)
-        refs_gc.append(SeqUtils.GC(entry.seq))
+
+        if entry.id not in zeros:
+            refs_gc.append(SeqUtils.GC(entry.seq))
+
+    # Initialize lists to contain only the refs that have mapped bases > 0
+    refs_new = []
+    refs_lengths_new = []
+
+    for i in range(len(refs)):
+        if refs[i] not in zeros:
+            refs_new.append(refs[i])
+            refs_lengths_new.append(refs_lengths[i])
 
     fig, (ax, ax2) = plt.subplots(2, 1)
     plt.subplots_adjust(hspace=0.45) # Set the distance between the two plots.
