@@ -83,6 +83,9 @@ parser.add_argument("--bcp", nargs='?', metavar='n', const=5, type=int,
 parser.add_argument("-r", "--rdist", action=RdistAction, nargs='*', metavar='value', type=int,
                         help="BAM Graph - Histrogram distribution plot of read-pair distances.\
                         Range and bin size are set in order: min max bin (Default = 0 1000 50)")
+parser.add_argument("--save", action="store_true",
+                        help="Save any plotted graphs as a PDF file in graphs folder.")
+
 
 # Parse the above arguments, so that they can be used in the script.
 args = parser.parse_args()
@@ -299,30 +302,44 @@ def bamf_gc_cov(ff, sf):
             refs_new.append(refs[i])
             refs_lengths_new.append(refs_lengths[i])
 
-    fig, (ax, ax2) = plt.subplots(2, 1)
-    plt.subplots_adjust(hspace=0.45) # Set the distance between the two plots.
+    if args.save:
+        ax = plt.subplot()
 
-    ax.set_title('GC against Coverage')
-    ax.set_xlabel('Coverage')
-    ax.set_ylabel('GC%')
-    ax2.tick_params(
-        axis='both',
-        which='both',
-        bottom='off',
-        top='off',
-        labelbottom='off',
-        labelleft='off',
-        right='off',
-        left='off'
-    )
-    plot, = ax.plot(refs_cov, refs_gc, 'o', picker=3)  # 3 points tolerance
+        ax.set_title('GC against Coverage')
+        ax.set_xlabel('Coverage')
+        ax.set_ylabel('GC%')
 
-    # Connect the user pick event with the class function browser.onpick().
-    # User pick event is given as argument.
-    browser = _PointBrowser()
-    fig.canvas.mpl_connect('pick_event', browser.onpick)
+        plot, = ax.plot(refs_cov, refs_gc, 'o')
 
-    plt.show()
+        plt.savefig('graphs/' + ff + '_GC-Coverage.pdf', bbox_inches='tight')
+        plt.close()
+
+    else:
+        fig, (ax, ax2) = plt.subplots(2, 1)
+        plt.subplots_adjust(hspace=0.45) # Set the distance between the two plots.
+
+        ax.set_title('GC against Coverage')
+        ax.set_xlabel('Coverage')
+        ax.set_ylabel('GC%')
+        ax2.tick_params(
+            axis='both',
+            which='both',
+            bottom='off',
+            top='off',
+            labelbottom='off',
+            labelleft='off',
+            right='off',
+            left='off'
+        )
+        plot, = ax.plot(refs_cov, refs_gc, 'o', picker=3)  # 3 points tolerance
+
+        # Connect the user pick event with the class function browser.onpick().
+        # User pick event is given as argument.
+        browser = _PointBrowser()
+        fig.canvas.mpl_connect('pick_event', browser.onpick)
+
+        plt.show()
+
     sf.close()
 
 def bam_cov_pos(filename, sf, top):
@@ -367,8 +384,12 @@ def bam_cov_pos(filename, sf, top):
         plt.xlabel('Position (bp)')
         plt.grid()
 
-        plt.savefig('graphs/' + filename + ref + '_coverage.pdf', bbox_inches='tight')
-        plt.close()
+        if args.save:
+            plt.savefig('graphs/' + filename + '_' + ref + '_coverage.pdf', bbox_inches='tight')
+            plt.close()
+
+        else:
+            plt.show()
 
     sf.close()
 
@@ -459,7 +480,13 @@ def bam_read_dist(sf, minimum, maximum, step):
     plt.xlabel('Distance (bp)')
     plt.ylabel('Number of reads')
     plt.xticks(bins)
-    plt.show()
+
+    if args.save:
+        plt.savefig('graphs/' + args.infile[0] + '_read-pair_dist.pdf', bbox_inches='tight')
+        plt.close()
+
+    else:
+        plt.show()
 
 def sort_bam(bf):
 
